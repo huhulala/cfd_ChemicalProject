@@ -60,7 +60,8 @@ int read_parameters(
   int *wt,
   int *wb,
   double *dt_value,
-  double *deltaP
+  double *deltaP,
+  double *TI
 );
 
 /**
@@ -68,6 +69,7 @@ int read_parameters(
  * the whole domain.
  */
 void init_uvp(
+  double TI,
   double UI,
   double VI,
   double PI,
@@ -77,7 +79,8 @@ void init_uvp(
   int **Flag,
   double **U,
   double **V,
-  double **P
+  double **P,
+  double **T
 );
 
 /**

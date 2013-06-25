@@ -24,7 +24,9 @@ int read_parameters( const char *szFileName,       /* name of the file */
                     int    *wt,
                     int    *wb,
         		    double *dt_value,            /* time for output */
-                    double *deltaP
+                    double *deltaP,
+                    double *TI
+
 )
 {
    READ_DOUBLE( szFileName, *xlength );
@@ -43,6 +45,7 @@ int read_parameters( const char *szFileName,       /* name of the file */
    READ_DOUBLE( szFileName, *PI );
    READ_DOUBLE( szFileName, *dt_value );
    READ_DOUBLE( szFileName, *deltaP );
+   READ_DOUBLE( szFileName, *TI );
 
    READ_INT( szFileName, *wl );
    READ_INT( szFileName, *wr );
@@ -58,8 +61,8 @@ int read_parameters( const char *szFileName,       /* name of the file */
  * The arrays U,V and P are initialized to the constant values UI, VI and PI on
  * the whole domain.
  */
-void init_uvp(double UI, double VI, double PI, int imax, int jmax,
-		char* problem, int **Flag, double **U, double **V, double **P)
+void init_uvp(double TI, double UI, double VI, double PI, int imax, int jmax,
+		char* problem, int **Flag, double **U, double **V, double **P, double **T)
 {
 	int i;
 	int j;
@@ -71,6 +74,7 @@ void init_uvp(double UI, double VI, double PI, int imax, int jmax,
 			U[i][j] = UI;
 			V[i][j] = VI;
 			P[i][j] = PI;
+			T[i][j] = TI;
 		}
 		else
 		{

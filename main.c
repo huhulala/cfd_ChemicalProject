@@ -42,7 +42,7 @@
 int main(int argn, char** args)
 {
 	/**************** Variable definition goes here  ****************/
-	double Re, UI, VI, PI, GX, GY;
+	double Re, UI, VI, TI , PI, GX, GY;
 	double t_end, xlength, ylength;
 	double dt, dx, dy;
 	double alpha, omg, tau;
@@ -69,6 +69,10 @@ int main(int argn, char** args)
 	double **RS = NULL;
 	double **F = NULL;
 	double **G = NULL;
+
+	/*  array for temperature  */
+    double**  T = NULL;
+
 	int **Problem = NULL;
 	int **Flag = NULL;
 
@@ -111,7 +115,7 @@ int main(int argn, char** args)
 	/* load parameters from "problem".dat file */
 	/* grid size (dx,dy,imax,ymax) should now be read from the image */
     read_parameters(szFileName,&Re,&UI,&VI,&PI,&GX,&GY,&t_end,&xlength,&ylength,&dt,&alpha,
-    		        &omg,&tau,&itermax,&eps,&wl,&wr,&wt, &wb, &dt_value, &deltaP);
+    		        &omg,&tau,&itermax,&eps,&wl,&wr,&wt, &wb, &dt_value, &deltaP, &TI);
 
     /* assemble prblem file string */
 	strcpy(problemImageName, inputString);
@@ -132,6 +136,8 @@ int main(int argn, char** args)
 	G = matrix(0, imax + 1, 0, jmax + 1);
 	RS = matrix(0, imax + 1, 0, jmax + 1);
 
+	T   = matrix(0, imax + 1, 0, jmax + 1);
+
 	/* allocate memory for the field */
 	Flag = imatrix(0, imax + 1, 0, jmax + 1);
 
@@ -150,7 +156,7 @@ int main(int argn, char** args)
 
 	/* init uvp - here the signature was extended to the problem
 	 * string to init u&v in the step case to 0 */
-	init_uvp(UI, VI, PI, imax, jmax, problem, Flag, U, V, P);
+	init_uvp(TI, UI, VI, PI, imax, jmax, problem, Flag, U, V, P, T);
 
 //	printf("FLAG\n");
 //	print_matrix(Flag,0, imax + 1, 0, jmax + 1);
