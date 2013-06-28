@@ -5,8 +5,9 @@
 /**
  * The boundary values of the problem are set.
  */
-void boundaryvalues(int imax,int jmax, int wl, int wr, int wt, int wb, double **U, double **V,
-	 double **F, double **G,double **P, int** Flag)
+void boundaryvalues(int imax,int jmax,  double dx,
+		  double dy, int wl, int wr, int wt, int wb, double **U, double **V,
+	 double **F, double **G,double **P, double **T,int** Flag,double tl,double tr,double tb,double tt)
 {
     int i = 0;
     int j = 0;
@@ -83,6 +84,57 @@ void boundaryvalues(int imax,int jmax, int wl, int wr, int wt, int wb, double **
 				break;
 		}
 	}
+
+	/** left and right wall **/
+	for ( j = 1; j <= jmax; ++j ) {
+            /* left wall */
+            if (tl > 0)
+            {
+                T[0][j] = 2*tl - T[1][j];
+            }
+            else
+            {
+            	double dTdn = 0;
+                T[0][j] = T[1][j] + (dTdn * (j - 0.5) * dy * dx);
+            }
+            /* right wall */
+            if (tr > 0)
+            {
+                T[imax+1][j] = 2*tr - T[imax][j];
+            }
+            else
+            {
+            	double dTdn = 0;
+                T[imax+1][j] = T[imax][j] + (dTdn * (j - 0.5) * dy * dx);
+            }
+	}
+
+	/** bottom and top wall **/
+	for (i = 1; i <= imax; ++i) {
+            /* bottom wall */
+            if (tb > 0)
+            {
+            	T[i][0] = 2*tb - T[i][1];
+            }
+            else
+            {
+            	double dTdn = 0;
+                T[i][0] = T[i][1] + (dTdn*(i - 0.5) *dx * dy);
+            }
+
+            /* top wall */
+            if (tt > 0)
+            {
+            	T[i][jmax+1] = 2*tt - T[i][jmax];
+            }
+            else
+            {
+            	double dTdn = 0;
+                T[i][jmax+1] = T[i][jmax] + (dTdn * (i-0.5)*dx*dy);
+            }
+	}
+
+	/**** TEMPERATURE END ****/s
 
 
     /* set the values of the inner obstacles */

@@ -61,7 +61,13 @@ int read_parameters(
   int *wb,
   double *dt_value,
   double *deltaP,
-  double *TI
+  double *TI,
+  double *beta,
+  double *PR,
+  double *tl,
+  double *tr,
+  double *tb,
+  double *tt
 );
 
 /**

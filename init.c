@@ -25,8 +25,13 @@ int read_parameters( const char *szFileName,       /* name of the file */
                     int    *wb,
         		    double *dt_value,            /* time for output */
                     double *deltaP,
-                    double *TI
-
+                    double *TI,
+                    double *beta,
+                    double *Pr,
+                    double *tl,
+                    double *tr,
+                    double *tb,
+                    double *tt
 )
 {
    READ_DOUBLE( szFileName, *xlength );
@@ -46,6 +51,12 @@ int read_parameters( const char *szFileName,       /* name of the file */
    READ_DOUBLE( szFileName, *dt_value );
    READ_DOUBLE( szFileName, *deltaP );
    READ_DOUBLE( szFileName, *TI );
+   READ_DOUBLE( szFileName, *beta );
+   READ_DOUBLE( szFileName, *Pr );
+   READ_DOUBLE( szFileName, *tl );
+   READ_DOUBLE( szFileName, *tr );
+   READ_DOUBLE( szFileName, *tb );
+   READ_DOUBLE( szFileName, *tt );
 
    READ_INT( szFileName, *wl );
    READ_INT( szFileName, *wr );

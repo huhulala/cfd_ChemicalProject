@@ -79,7 +79,7 @@ void calculate_fg(double Re, double GX, double GY, double alpha, double dt,
 	}
 }
 
-void calculate_dt(double Re, double tau, double *dt, double dx, double dy,
+void calculate_dt(double Re, double Pr, double tau, double *dt, double dx, double dy,
 		int imax, int jmax, double **U, double **V) {
 	/* See formula 13 */
 	double umax = fabs(U[1][1]);
@@ -98,7 +98,7 @@ void calculate_dt(double Re, double tau, double *dt, double dx, double dy,
 		}
 
 	/* conditions */
-	dtcon = Re / (2 * (1 / (dx * dx) + 1 / (dy * dy)));
+	dtcon = Pr*Re / (2 * (1 / (dx * dx) + 1 / (dy * dy)));
 	dxcon = dx / fabs(umax);
 	dycon = dy / fabs(vmax);
 

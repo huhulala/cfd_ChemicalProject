@@ -88,6 +88,7 @@ void calculate_rs(
  */
 void calculate_dt(
   double Re,
+  double Pr,
   double tau,
   double *dt,
   double dx,

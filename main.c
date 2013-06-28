@@ -49,6 +49,14 @@ int main(int argn, char** args)
 	double eps, dt_value, res, t, deltaP;
 	int itermax, it, n;
 	int n_div;
+	/**************** dimensionless quantities for temperature  ****************/
+	double beta; /* cooefficient for termal expansion beta */
+	double Pr;   /* Prandtl number Pr */
+
+    double tl;
+    double tr;
+    double tb;
+    double tt;
 
 	int imax = 0;
 	int jmax = 0;
@@ -115,7 +123,8 @@ int main(int argn, char** args)
 	/* load parameters from "problem".dat file */
 	/* grid size (dx,dy,imax,ymax) should now be read from the image */
     read_parameters(szFileName,&Re,&UI,&VI,&PI,&GX,&GY,&t_end,&xlength,&ylength,&dt,&alpha,
-    		        &omg,&tau,&itermax,&eps,&wl,&wr,&wt, &wb, &dt_value, &deltaP, &TI);
+    		        &omg,&tau,&itermax,&eps,&wl,&wr,&wt, &wb, &dt_value, &deltaP, &TI, &beta,
+    		        &Pr,&tl,&tr, &tb,&tt);
 
     /* assemble prblem file string */
 	strcpy(problemImageName, inputString);
@@ -165,16 +174,12 @@ int main(int argn, char** args)
 
 	while (t < t_end)
 	{
-
 		/*calculate the timestep */
-       calculate_dt(Re, tau,&dt, dx, dy, imax,jmax, U,V);
-
-       if(debug){
-    	   printf("deltaT=%f\n",dt);
-        }
+        calculate_dt(Re, Pr, tau, &dt, dx, dy, imax,jmax, U,V);
 
         /*calculate the boundary values   */
-		boundaryvalues( imax, jmax, wl, wr, wt, wb, U, V, F, G, P, Flag);
+		boundaryvalues( imax, jmax,dx,dy, wl, wr, wt, wb, U, V, F, G, P, T, Flag,
+				tl,tr, tb,tt);
 
     	/* set special boundary values*/
 	    spec_boundary_val( problem, imax, jmax, dx, dy, Re, deltaP, U, V, P);
