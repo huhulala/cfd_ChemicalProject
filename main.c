@@ -102,9 +102,10 @@ int main(int argn, char** args)
 	if (!(strcmp(args[1], "karman") == 0
 		|| strcmp(args[1], "plane") == 0
 		|| strcmp(args[1], "step") == 0
-		|| strcmp(args[1], "rayleigh") == 0))
+		|| strcmp(args[1], "rayleigh") == 0
+		|| strcmp(args[1], "rayleigh2") == 0))
 	{
-		printf("ERROR: pass rayleigh, karman, plane or step\n");
+		printf("ERROR: pass rayleigh, rayleigh2, karman, plane or step\n");
 		return 1;
 	}
 
@@ -177,8 +178,8 @@ int main(int argn, char** args)
 	 * string to init u&v in the step case to 0 */
 	init_uvp(TI, UI, VI, PI, imax, jmax, problem, Flag, U, V, P, T);
 
-//	printf("FLAG\n");
-//	print_matrix(Flag,0, imax + 1, 0, jmax + 1);
+	printf("FLAG\n");
+	print_matrix(Flag,0, imax + 1, 0, jmax + 1);
 //	printf("init U\n");
 //	print_matrixD(U,0, imax + 1, 0, jmax + 1);
 
@@ -195,11 +196,11 @@ int main(int argn, char** args)
 	    spec_boundary_val( problem, imax, jmax, dx, dy, Re, deltaP, U, V, P,T);
 
 	    /* calculate new temperature values */
-	    calculate_Temp(U, V, T, Flag, imax, jmax, dt, dx, dy, GX, GY, gamma, Re, Pr, beta);
+	    calculate_Temp(U, V, T, Flag, imax, jmax, dt, dx, dy, alpha, Re, Pr);
 
 
-		printf("boundary Values T\n");
-		//print_matrixD(U,0, imax + 1, 0, jmax + 1);
+		//printf("calculate_Temp T\n");
+		//print_matrixD(T,0, imax + 1, 0, jmax + 1);
 
 		/*calculate F&G* - here the signature was extended to the FLAG
 	     * matrix to calculate values only for fluid cells */
@@ -208,15 +209,12 @@ int main(int argn, char** args)
 	    //calculate_fg( Re, GX, GY, alpha, dt, dx,dy, imax, jmax, U, V, F, G, Flag);
 		calculate_fg1(Re, GX, GY, alpha, dt, dx, dy, imax, jmax, U, V ,F , G, Flag ,T,beta);
 
-		//printf("F\n");
-		//print_matrixD(F,0, imax + 1, 0, jmax + 1);
+		//printf("G\n");
+		//print_matrixD(G,0, imax + 1, 0, jmax + 1);
 
 		/*calculate righthand site - here the signature was extended to the FLAG
 	     * matrix to calculate values only for fluid cells */
         calculate_rs(dt,dx, dy, imax, jmax, F, G, RS, Flag);
-
-    	//printf("RS\n");
-    	//print_matrixD(RS,0, imax +1, 0, jmax +1);
 
 		/* set initial residual*/
 		it = 0;
@@ -234,7 +232,7 @@ int main(int argn, char** args)
 
 
 		n_div = (dt_value / dt);
-		if (n_div!=0 && n % n_div == 0)
+		//if ((n_div!=0 && n % n_div == 0) )
 	 	{
 	 		write_vtkFile(output_filename_array, n, imax, jmax, dx, dy, U, V, P, T);
 	 	}

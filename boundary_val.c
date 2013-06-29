@@ -137,7 +137,7 @@ void boundaryvalues(int imax, int jmax, double dx, double dy, int wl, int wr,
 			}
 		}
 
-	/*
+
 	for (i = 1; i <= imax; ++i) {
 		for (j = 1; j <= jmax; ++j) {
 			if (Flag[i][j] == B_N) {
@@ -173,7 +173,7 @@ void boundaryvalues(int imax, int jmax, double dx, double dy, int wl, int wr,
 			}
 		}
 	}
-   */
+
 }
 
 /**
@@ -383,6 +383,22 @@ void spec_boundary_val(char *problem, int imax, int jmax, double dx, double dy,
 	     {
 	    	 T[j][0] = 2*(0.5)-T[j][1];
 	    	 T[j][jmax+1] = 2*(-0.5)-T[j][jmax];
+	     }
+	     return;
+	  }
+	 else if ( strcmp(problem, "rayleigh2")==0 )
+	 {
+
+	     for(j=0; j<=jmax+1; j++)
+	     {
+	    	 T[0][j] = T[1][j];
+	    	 T[imax+1][j] = T[imax][j];
+	      }
+
+	     for(j=0;j<=imax+1;j++)
+	     {
+	    	 T[j][0] = 2*(292.5)-T[j][1];
+	    	 T[j][jmax+1] = 2*(293.5)-T[j][jmax];
 	     }
 	     return;
 	  }

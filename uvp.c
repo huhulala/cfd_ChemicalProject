@@ -81,7 +81,7 @@ void calculate_dt(double Re, double Pr, double tau, double *dt, double dx,
 	/* See formula 13 */
 	double umax = fabs(U[1][1]);
 	double vmax = fabs(V[1][1]);
-	double dtcon, dxcon, dycon;
+	double dtcon, dxcon, dycon, dttcon;
 	double min;
 	int i;
 	int j;
@@ -96,6 +96,8 @@ void calculate_dt(double Re, double Pr, double tau, double *dt, double dx,
 
 	/* conditions */
 	dtcon = Pr * Re / (2 * (1 / (dx * dx) + 1 / (dy * dy)));
+    dttcon = Re/(2*(1/(dx*dx) + 1/(dy*dy)));
+
 	dxcon = dx / fabs(umax);
 	dycon = dy / fabs(vmax);
 
@@ -105,6 +107,8 @@ void calculate_dt(double Re, double Pr, double tau, double *dt, double dx,
 		min = dxcon;
 	if (min > dycon)
 		min = dycon;
+	if (min > dttcon)
+		min = dttcon;
 
 	/* calculate dt */
 	*dt = tau * min;
@@ -204,6 +208,7 @@ void calculate_fg1(double Re, double GX, double GY, double alpha, double dt,
 			 * We need to check that the cell is actually a fluid cell.
 			 */
 			if (((Flag[i][j] & B_C) == B_C) && i < imax) {
+
 				d2udx2 = (U[i + 1][j] - 2 * U[i][j] + U[i - 1][j]) / (dx * dx);
 
 				d2udy2 = (U[i][j + 1] - 2 * U[i][j] + U[i][j - 1]) / (dy * dy);
@@ -222,11 +227,16 @@ void calculate_fg1(double Re, double GX, double GY, double alpha, double dt,
 						/ 2 - abs(V[i][j - 1] + V[i + 1][j - 1]) / 2 * (U[i][j
 						- 1] - U[i][j]) / 2);
 
+
 				F[i][j] = U[i][j] + dt
 						* ((1 / Re) * (d2udx2 + d2udy2) - du2dx - duvdy + GX)
 						        -dt*beta*GX*(T[i][j]+T[i+1][j])/2;
 
+
 			}
+		    else
+		    	 F[i][j] = U[i][j];
+
 			/*Determines the value of G according to the formula above with the help of temporary variables*/
 			if (((Flag[i][j] & B_C) == B_C) && j < jmax) {
 				d2vdx2 = (V[i + 1][j] - 2 * V[i][j] + V[i - 1][j]) / (dx * dx);
@@ -248,10 +258,18 @@ void calculate_fg1(double Re, double GX, double GY, double alpha, double dt,
 						/ 2 - abs(V[i][j - 1] + V[i][j]) / 2 * (V[i][j - 1]
 						- V[i][j]) / 2);
 
+				double lala = dt*beta*GY*(T[i][j]+T[i][j+1])/2;
+
+
 				G[i][j] = V[i][j] + dt
 						* ((1 / Re) * (d2vdx2 + d2vdy2) - duvdx - dv2dy + GY)
 					       -dt*beta*GY*(T[i][j]+T[i][j+1])/2;
+
+
+
 			}
+			else
+				G[i][j] = V[i][j];
 			/*
 			 * In case its a boundary cell, then we check it by comparing the flags and calculate
 			 * only the useful values of F and G.
@@ -296,8 +314,7 @@ void calculate_fg1(double Re, double GX, double GY, double alpha, double dt,
 }
 
 void calculate_Temp(double **U, double **V, double **TEMP, int **Flag,
-		int imax, int jmax, double dt, double dx, double dy, double GX,
-		double GY, double gamma, double Re, double Pr, double beta) {
+		int imax, int jmax, double dt, double dx, double dy, double gamma, double Re, double Pr) {
 
 	double dutdx;
 	double d2tdx2;
@@ -311,8 +328,12 @@ void calculate_Temp(double **U, double **V, double **TEMP, int **Flag,
 	double LAPLT, DUTDX, DVTDY;
 	int i, j;
 
-	indelx2 = 1 / (dx / dx);
-	indely2 = 1 / (dy / dy);
+	LAPLT = 0.0;
+	DUTDX = 0.0;
+	DVTDY = 0.0;
+
+	indelx2 = 1 / (dx * dx);
+	indely2 = 1 / (dy * dy);
 
 	//double q; /* heat source */
 	/* TODO: Heat Source bei reactions setzen */
@@ -330,9 +351,22 @@ void calculate_Temp(double **U, double **V, double **TEMP, int **Flag,
 
 			if (Flag[i][j] >= C_F) {
 
+
+				double lala1 = TEMP[i + 1][j];
+				double lala2 = TEMP[i - 1][j];
+				double lala3 = TEMP[i][j+1];
+				double lala4 = TEMP[i][j-1];
+				double lala5 = TEMP[i][j];
+
+
+				double huhu = (TEMP[i + 1][j] - 2.0 * TEMP[i][j] + TEMP[i - 1][j]);
+				double huhu1 = (TEMP[i][j + 1] - 2.0 * TEMP[i][j] + TEMP[i][j - 1]);
+
+
 				LAPLT = (TEMP[i + 1][j] - 2.0 * TEMP[i][j] + TEMP[i - 1][j])
 						* indelx2 + (TEMP[i][j + 1] - 2.0 * TEMP[i][j]
 						+ TEMP[i][j - 1]) * indely2;
+
 				DUTDX = ((U[i][j] * 0.5 * (TEMP[i][j] + TEMP[i + 1][j]) - U[i
 						- 1][j] * 0.5 * (TEMP[i - 1][j] + TEMP[i][j])) + gamma
 						* (fabs(U[i][j]) * 0.5 * (TEMP[i][j] - TEMP[i + 1][j])
@@ -343,8 +377,13 @@ void calculate_Temp(double **U, double **V, double **TEMP, int **Flag,
 						+ gamma * (fabs(V[i][j]) * 0.5 * (TEMP[i][j]
 								- TEMP[i][j + 1]) - fabs(V[i][j - 1]) * 0.5
 								* (TEMP[i][j - 1] - TEMP[i][j]))) / dy;
-				TEMP[i][j] = TEMP[i][j] + dt
-						* (LAPLT / Re / Pr - DUTDX - DVTDY);
+
+				double lala12 = TEMP[i][j] + dt
+						* (LAPLT / (Re * Pr) - DUTDX - DVTDY);
+				TEMP[i][j] = lala12;
+
+
+
 				/*
 				 firstOperand = (1 / dx) * (U[i][j] * (T[i][j] + T[i + 1][j])
 				 / 2 - U[i - 1][j] * (T[i - 1][j] + T[i][j]) / 2);

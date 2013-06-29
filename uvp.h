@@ -103,19 +103,6 @@ void calculate_dt(
   double **V
 );
 
-void calculate_dt1(
-  double Re,
-  double tau,
-  double *dt,
-  double dx,
-  double dy,
-  int imax,
-  int jmax,
-  double **U,
-  double **V,
-  int **Flag
-);
-
 
 /**
  * Calculates the new velocity values according to the formula
@@ -146,7 +133,7 @@ void calculate_uv(
 
 /* Computes the new temperature values */
 void calculate_Temp(double **U, double **V, double **T, int **Flag, int imax, int jmax,
-		double dt, double dx, double dy, double GX, double GY, double gamma,
-		double Re, double Pr, double beta);
+		double dt, double dx, double dy, double gamma,
+		double Re, double Pr);
 
 #endif
