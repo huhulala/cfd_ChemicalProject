@@ -63,6 +63,7 @@ int read_parameters(
   double *deltaP,
   double *TI,
   double *beta,
+  double *gamma,
   double *PR,
   double *tl,
   double *tr,

@@ -27,6 +27,7 @@ int read_parameters( const char *szFileName,       /* name of the file */
                     double *deltaP,
                     double *TI,
                     double *beta,
+                    double *gamma,
                     double *Pr,
                     double *tl,
                     double *tr,
@@ -52,6 +53,7 @@ int read_parameters( const char *szFileName,       /* name of the file */
    READ_DOUBLE( szFileName, *deltaP );
    READ_DOUBLE( szFileName, *TI );
    READ_DOUBLE( szFileName, *beta );
+   READ_DOUBLE( szFileName, *gamma );
    READ_DOUBLE( szFileName, *Pr );
    READ_DOUBLE( szFileName, *tl );
    READ_DOUBLE( szFileName, *tr );

@@ -45,7 +45,7 @@ int main(int argn, char** args)
 	double Re, UI, VI, TI , PI, GX, GY;
 	double t_end, xlength, ylength;
 	double dt, dx, dy;
-	double alpha, omg, tau;
+	double alpha, gamma, omg, tau;
 	double eps, dt_value, res, t, deltaP;
 	int itermax, it, n;
 	int n_div;
@@ -68,6 +68,8 @@ int main(int argn, char** args)
 	/* Output filename */
 	char* output_filename;
 	char output_filename_array[64];
+	char* inputDir;
+	char inputDirCharArray[64];
 	char* problem;
 
 	/* arrays */
@@ -99,9 +101,10 @@ int main(int argn, char** args)
 	}
 	if (!(strcmp(args[1], "karman") == 0
 		|| strcmp(args[1], "plane") == 0
-		|| strcmp(args[1], "step") == 0))
+		|| strcmp(args[1], "step") == 0
+		|| strcmp(args[1], "rayleigh") == 0))
 	{
-		printf("ERROR: pass karman, plane or step\n");
+		printf("ERROR: pass rayleigh, karman, plane or step\n");
 		return 1;
 	}
 
@@ -112,6 +115,10 @@ int main(int argn, char** args)
 	problem = args[1];
 	/* assemble parameter file string */
 	output_filename= "./output_";
+	inputDir= "./input/";
+
+	strcpy(inputDirCharArray, inputDir);
+
 	strcpy(output_filename_array, output_filename);
 	strcat(output_filename_array, args[1]);
 	strcat(output_filename_array, "/");
@@ -119,20 +126,23 @@ int main(int argn, char** args)
 	strcpy(inputString, args[1]);
 	strcpy(szFileName, inputString);
 	strcat(szFileName, ".dat");
+	strcat(inputDirCharArray, szFileName);
 
 	/* load parameters from "problem".dat file */
 	/* grid size (dx,dy,imax,ymax) should now be read from the image */
-    read_parameters(szFileName,&Re,&UI,&VI,&PI,&GX,&GY,&t_end,&xlength,&ylength,&dt,&alpha,
-    		        &omg,&tau,&itermax,&eps,&wl,&wr,&wt, &wb, &dt_value, &deltaP, &TI, &beta,
+    read_parameters(inputDirCharArray,&Re,&UI,&VI,&PI,&GX,&GY,&t_end,&xlength,&ylength,&dt,&alpha,
+    		        &omg,&tau,&itermax,&eps,&wl,&wr,&wt, &wb, &dt_value, &deltaP, &TI, &beta, &gamma,
     		        &Pr,&tl,&tr, &tb,&tt);
 
-    /* assemble prblem file string */
+    /* assemble problem file string */
 	strcpy(problemImageName, inputString);
 	strcat(problemImageName, ".pgm");
+	strcpy(inputDirCharArray, inputDir);
+	strcat(inputDirCharArray, problemImageName);
 
 	/*  load problem description from "problem".pgm file */
 	/*  read imax and jmax (and calculate dx und dy) from problem description now */
-	Problem = read_pgm(problemImageName, &imax, &jmax);
+	Problem = read_pgm(inputDirCharArray, &imax, &jmax);
 	/* calculute dx/dy */
 	dx = xlength / (double) (imax);
 	dy = ylength / (double) (jmax);
@@ -169,8 +179,8 @@ int main(int argn, char** args)
 
 //	printf("FLAG\n");
 //	print_matrix(Flag,0, imax + 1, 0, jmax + 1);
-	printf("init U\n");
-	print_matrixD(U,0, imax + 1, 0, jmax + 1);
+//	printf("init U\n");
+//	print_matrixD(U,0, imax + 1, 0, jmax + 1);
 
 	while (t < t_end)
 	{
@@ -182,9 +192,13 @@ int main(int argn, char** args)
 				tl,tr, tb,tt);
 
     	/* set special boundary values*/
-	    spec_boundary_val( problem, imax, jmax, dx, dy, Re, deltaP, U, V, P);
+	    spec_boundary_val( problem, imax, jmax, dx, dy, Re, deltaP, U, V, P,T);
 
-		//printf("boundary Values U\n");
+	    /* calculate new temperature values */
+	    calculate_Temp(U, V, T, Flag, imax, jmax, dt, dx, dy, GX, GY, gamma, Re, Pr, beta);
+
+
+		printf("boundary Values T\n");
 		//print_matrixD(U,0, imax + 1, 0, jmax + 1);
 
 		/*calculate F&G* - here the signature was extended to the FLAG
@@ -192,7 +206,7 @@ int main(int argn, char** args)
 
 	    // some error in fg helper
 	    //calculate_fg( Re, GX, GY, alpha, dt, dx,dy, imax, jmax, U, V, F, G, Flag);
-		calculate_fg1(Re, GX, GY, alpha, dt, dx, dy, imax, jmax, U, V ,F , G, Flag);
+		calculate_fg1(Re, GX, GY, alpha, dt, dx, dy, imax, jmax, U, V ,F , G, Flag ,T,beta);
 
 		//printf("F\n");
 		//print_matrixD(F,0, imax + 1, 0, jmax + 1);
@@ -222,7 +236,7 @@ int main(int argn, char** args)
 		n_div = (dt_value / dt);
 		if (n_div!=0 && n % n_div == 0)
 	 	{
-	 		write_vtkFile(output_filename_array, n, imax, jmax, dx, dy, U, V, P);
+	 		write_vtkFile(output_filename_array, n, imax, jmax, dx, dy, U, V, P, T);
 	 	}
 
 	 	t = t + dt;
@@ -233,7 +247,7 @@ int main(int argn, char** args)
 				printf("write outputfile - step-counter: %i, time: %f, sor-interations: %i  \n",n, t, it);
 		}
 	}
-	write_vtkFile(output_filename_array, n, imax, jmax, dx, dy, U, V, P);
+	//write_vtkFile(output_filename_array, n, imax, jmax, dx, dy, U, V, P);
 
 	/* free arrays */
 	free_matrix(U, 0, imax + 1, 0, jmax + 1);

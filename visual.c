@@ -4,7 +4,7 @@
 
 void write_vtkFile(const char *szProblem, int timeStepNumber, int imax, int jmax,
 		double dx, double dy, double **U,
-		double **V, double **P) {
+		double **V, double **P, double **T) {
 
 	int i, j;
 	char szFileName[80];
@@ -41,6 +41,12 @@ void write_vtkFile(const char *szProblem, int timeStepNumber, int imax, int jmax
 			fprintf(fp, "%f\n", P[i][j]);
 		}
 	}
+
+	fprintf(fp, "\nSCALARS temperature float 1 \n");
+	fprintf(fp, "LOOKUP_TABLE default \n");
+	for(j = 1; j < jmax+1; j++)
+		for(i = 1; i < imax+1; i++)
+			fprintf(fp, "%f\n", T[i][j]);
 
 	if (fclose(fp)) {
 		char szBuff[80];

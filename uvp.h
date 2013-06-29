@@ -28,6 +28,7 @@ void calculate_fg(
   double GX,
   double GY,
   double alpha,
+  double beta,
   double dt,
   double dx,
   double dy,
@@ -37,6 +38,7 @@ void calculate_fg(
   double **V,
   double **F,
   double **G,
+  double **P,
   int **Flag
 );
 
@@ -54,7 +56,9 @@ void calculate_fg1(
   double **V,
   double **F,
   double **G,
-  int **Flag
+  int **Flag,
+  double **T,
+  double beta
   );
 
 
@@ -139,5 +143,10 @@ void calculate_uv(
   double **P,
   int **Flag
 );
+
+/* Computes the new temperature values */
+void calculate_Temp(double **U, double **V, double **T, int **Flag, int imax, int jmax,
+		double dt, double dx, double dy, double GX, double GY, double gamma,
+		double Re, double Pr, double beta);
 
 #endif
