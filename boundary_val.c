@@ -370,9 +370,8 @@ void spec_boundary_val(char *problem, int imax, int jmax, double dx, double dy,
 	//  left and right walls adiabatic,
 	//  lower wall heated, upper wall cooled.
 	//
-	 else if ( strcmp(problem, "rayleigh")==0 )
+	 else if ( strcmp(problem, "rayleigh") ==0)
 	 {
-
 	     for(j=0; j<=jmax+1; j++)
 	     {
 	    	 T[0][j] = T[1][j];
@@ -386,9 +385,23 @@ void spec_boundary_val(char *problem, int imax, int jmax, double dx, double dy,
 	     }
 	     return;
 	  }
-	 else if ( strcmp(problem, "rayleigh2")==0 )
+	 else if (strcmp(problem, "fluidTrap")==0)
 	 {
+	     for(j=0; j<=jmax+1; j++)
+	     {
+	    	 T[0][j] = 2*(2.5)-T[1][j];
+	    	 T[imax+1][j] = 2*(-2.5)-T[imax][j];
+	      }
 
+	     for(j=0;j<=imax+1;j++)
+	     {
+	    	 T[j][0] = T[j][1];
+	    	 T[j][jmax+1] = T[j][jmax] ;
+	     }
+	     return;
+	  }
+	 else if (strcmp(problem, "rayleigh_plane")==0)
+	 {
 	     for(j=0; j<=jmax+1; j++)
 	     {
 	    	 T[0][j] = T[1][j];
@@ -397,8 +410,8 @@ void spec_boundary_val(char *problem, int imax, int jmax, double dx, double dy,
 
 	     for(j=0;j<=imax+1;j++)
 	     {
-	    	 T[j][0] = 2*(292.5)-T[j][1];
-	    	 T[j][jmax+1] = 2*(293.5)-T[j][jmax];
+	    	 T[j][0] = 2*(293.5)-T[j][1];
+	    	 T[j][jmax+1] = 2*(292.5)-T[j][jmax];
 	     }
 	     return;
 	  }

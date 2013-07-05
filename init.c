@@ -108,9 +108,24 @@ void init_uvp(double TI, double UI, double VI, double PI, int imax, int jmax,
 
 
 /**  Init the flag field **/
-int init_flag(int **Problem,int imax,int jmax, int **Flag)
+int init_flag(int **Problem,int imax,int jmax, int **Flag, int **Sources)
 {
     int i, j;
+
+    /* first read chemical source domain */
+    for (i = 1; i < imax+1; i++) {
+        for (j = 1; j < jmax+1; j++) {
+            if(Problem[i][j] != 0 && Problem[i][j] != 255 && Problem[i][j] != 128)
+            {
+                Sources[i][j] = Problem[i][j];
+            }
+            else
+            {
+                Sources[i][j] = 0;
+            }
+	    }
+    }
+
     /* normalize problem - due to read_pgm returns not always 1 and zero,
      * the problem needs to be normalized */
     for (i = 1; i < imax+1; i++)

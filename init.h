@@ -97,7 +97,8 @@ int init_flag(
     int **Problem,
     int imax,
     int jmax,
-    int **Flag
+    int **Flag,
+    int **Sources
 );
 
 #endif

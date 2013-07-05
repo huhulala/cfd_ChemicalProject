@@ -48,7 +48,7 @@ int main(int argn, char** args)
 	double alpha, gamma, omg, tau;
 	double eps, dt_value, res, t, deltaP;
 	int itermax, it, n;
-	int n_div;
+	double t_print;
 	/**************** dimensionless quantities for temperature  ****************/
 	double beta; /* cooefficient for termal expansion beta */
 	double Pr;   /* Prandtl number Pr */
@@ -85,6 +85,8 @@ int main(int argn, char** args)
 
 	int **Problem = NULL;
 	int **Flag = NULL;
+	/*  flag field for the sources  */
+    int **ChemicalSources = NULL;
 
 	char inputString[64];
 	char problemImageName[64];
@@ -102,16 +104,18 @@ int main(int argn, char** args)
 	if (!(strcmp(args[1], "karman") == 0
 		|| strcmp(args[1], "plane") == 0
 		|| strcmp(args[1], "step") == 0
+		|| strcmp(args[1], "cavity") == 0
 		|| strcmp(args[1], "rayleigh") == 0
-		|| strcmp(args[1], "rayleigh2") == 0))
+		|| strcmp(args[1], "rayleigh_plane")== 0
+		|| strcmp(args[1], "diffusion") == 0))
 	{
-		printf("ERROR: pass rayleigh, rayleigh2, karman, plane or step\n");
+		printf("ERROR: pass cavity, rayleigh, rayleigh_plane, fluidTrap, karman, plane or step\n");
 		return 1;
 	}
 
 	/*************** parameter loading and problem input goes here *************************/
 
-	t = 0.0;
+	t = 0.1;
 	n = 0;
 	problem = args[1];
 	/* assemble parameter file string */
@@ -158,15 +162,16 @@ int main(int argn, char** args)
 
 	T   = matrix(0, imax + 1, 0, jmax + 1);
 
-	/* allocate memory for the field */
+	/* allocate memory for the fields */
 	Flag = imatrix(0, imax + 1, 0, jmax + 1);
+	ChemicalSources = imatrix(0, imax + 1, 0, jmax+1);
 
 	/*************** the algorithm starts here *************************/
 
 	//init_flag1(Problem,problem, imax, jmax, 0, 0, 0, Flag);
 
 	/* init flag field*/
-	if (init_flag(Problem, imax, jmax, Flag) != 1)
+	if (init_flag(Problem, imax, jmax, Flag,ChemicalSources) != 1)
 	{
 		printf("Invalid obstacle. Program quits ...\n");
 		free_imatrix(Problem, 0, imax + 1, 0, jmax + 1);
@@ -178,11 +183,22 @@ int main(int argn, char** args)
 	 * string to init u&v in the step case to 0 */
 	init_uvp(TI, UI, VI, PI, imax, jmax, problem, Flag, U, V, P, T);
 
-	printf("FLAG\n");
+	printf("\n");
+	printf("Geometric Domain:\n");
 	print_matrix(Flag,0, imax + 1, 0, jmax + 1);
+	printf("\n");
+
+	printf("\n");
+	printf("Chemical Domain:\n");
+	print_matrix(ChemicalSources,0, imax + 1, 0, jmax + 1);
+	printf("\n");
+
+
+
 //	printf("init U\n");
 //	print_matrixD(U,0, imax + 1, 0, jmax + 1);
 
+	t_print = 0;
 	while (t < t_end)
 	{
 		/*calculate the timestep */
@@ -231,17 +247,17 @@ int main(int argn, char** args)
 	    calculate_uv(dt,dx,dy,imax,jmax, U, V, F, G, P, Flag);
 
 
-		n_div = (dt_value / dt);
-		//if ((n_div!=0 && n % n_div == 0) )
+		if (t > t_print)
 	 	{
 	 		write_vtkFile(output_filename_array, n, imax, jmax, dx, dy, U, V, P, T);
+	 		t_print += dt_value;
 	 	}
 
 	 	t = t + dt;
 		n++;
 		if (verbose)
 		{
-			if (n_div!=0 && n % n_div == 0)
+			if (t > t_print)
 				printf("write outputfile - step-counter: %i, time: %f, sor-interations: %i  \n",n, t, it);
 		}
 	}
