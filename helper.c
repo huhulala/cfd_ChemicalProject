@@ -354,6 +354,38 @@ double **matrix( int nrl, int nrh, int ncl, int nch )
    return pArray - nrl;
 }
 
+/*  allocates storage for a 3d matrix                                         */
+double*** matrix3d( int nrl, int nrh, int ncl, int nch, int kmax )
+{
+   int i;
+   int nrow = nrh - nrl + 1;	/* compute number of lines */
+   int ncol = nch - ncl + 1;	/* compute number of columns */
+
+   double*** pTop    = (double***) malloc((size_t)( kmax * sizeof(double**)) );
+   double**  pArray  = (double** ) malloc((size_t)( kmax * nrow * sizeof(double*)) );
+   double*   pMatrix = (double*  ) malloc((size_t)( kmax * nrow * ncol * sizeof( double )));
+
+   if( pArray  == 0)  ERROR("Storage cannot be allocated");
+   if( pMatrix == 0)  ERROR("Storage cannot be allocated");
+
+   /* first entry of the array points to the value corrected by the
+      beginning of the column */
+   pArray[0] = pMatrix - ncl;
+
+   /* compute the remaining array entries */
+   for( i = 1; i < nrow*kmax; i++ )
+   {
+       pArray[i] = pArray[i-1] + ncol;
+   }
+
+   pTop[0] = pArray;
+   for (i = 1; i < kmax; ++i) {
+       pTop[i] = pTop[i-1] + nrow;
+   }
+
+   return pTop;
+}
+
 
 /* deallocates the storage of a matrix  */
 void free_matrix( double **m, int nrl, int nrh, int ncl, int nch )

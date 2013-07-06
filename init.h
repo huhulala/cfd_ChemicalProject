@@ -68,7 +68,8 @@ int read_parameters(
   double *tl,
   double *tr,
   double *tb,
-  double *tt
+  double *tt,
+  int *s_max
 );
 
 /**
@@ -87,7 +88,17 @@ void init_uvp(
   double **U,
   double **V,
   double **P,
-  double **T
+  double **T,
+  double*** C,
+  int s_max
+);
+
+void init_staticConcentrations(
+		double*** C,
+		int **Sources,
+		int s_max,
+		int imax,
+		int jmax
 );
 
 /**

@@ -213,6 +213,9 @@ void read_matrix( const char* szFileName,	               /* filehandle */
  *    free_matrix( U,  0, imax+1, 0, jmax+1 );
  */
 double **matrix( int nrl, int nrh, int ncl, int nch );
+
+
+double*** matrix3d( int nrl, int nrh, int ncl, int nch, int kmax );
 /**
  * matrix(...)        storage allocation for a matrix (nrl..nrh, ncl..nch)
  * free_matrix(...)   storage deallocation

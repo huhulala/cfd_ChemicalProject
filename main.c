@@ -80,6 +80,9 @@ int main(int argn, char** args)
 	double **F = NULL;
 	double **G = NULL;
 
+    double*** C  = NULL;
+    double*** Q  = NULL;
+
 	/*  array for temperature  */
     double**  T = NULL;
 
@@ -91,6 +94,8 @@ int main(int argn, char** args)
 	char inputString[64];
 	char problemImageName[64];
 	char szFileName[64];
+
+	int s_max;
 
 	int verbose = 1; /* verbose flag */
 	int debug = 1; /* verbose flag */
@@ -137,7 +142,7 @@ int main(int argn, char** args)
 	/* grid size (dx,dy,imax,ymax) should now be read from the image */
     read_parameters(inputDirCharArray,&Re,&UI,&VI,&PI,&GX,&GY,&t_end,&xlength,&ylength,&dt,&alpha,
     		        &omg,&tau,&itermax,&eps,&wl,&wr,&wt, &wb, &dt_value, &deltaP, &TI, &beta, &gamma,
-    		        &Pr,&tl,&tr, &tb,&tt);
+    		        &Pr,&tl,&tr, &tb,&tt,&s_max);
 
     /* assemble problem file string */
 	strcpy(problemImageName, inputString);
@@ -152,7 +157,7 @@ int main(int argn, char** args)
 	dx = xlength / (double) (imax);
 	dy = ylength / (double) (jmax);
 
-	/* allocate memory for the arrays */
+	/* allocate memory for the NS arrays */
 	U = matrix(0, imax + 1, 0, jmax + 1);
 	V = matrix(0, imax + 1, 0, jmax + 1);
 	P = matrix(0, imax + 1, 0, jmax + 1);
@@ -160,18 +165,20 @@ int main(int argn, char** args)
 	G = matrix(0, imax + 1, 0, jmax + 1);
 	RS = matrix(0, imax + 1, 0, jmax + 1);
 
+	/* allocate memory for the temperature  */
 	T   = matrix(0, imax + 1, 0, jmax + 1);
 
-	/* allocate memory for the fields */
+	/* allocate memory for the chemical arrays  */
+	C  = matrix3d(0, imax + 1, 0, jmax + 1, s_max);
+	Q  = matrix3d(0, imax + 1, 0, jmax + 1, s_max);
+
+	/* allocate memory for the flag fields */
 	Flag = imatrix(0, imax + 1, 0, jmax + 1);
 	ChemicalSources = imatrix(0, imax + 1, 0, jmax+1);
 
 	/*************** the algorithm starts here *************************/
-
-	//init_flag1(Problem,problem, imax, jmax, 0, 0, 0, Flag);
-
 	/* init flag field*/
-	if (init_flag(Problem, imax, jmax, Flag,ChemicalSources) != 1)
+	if (init_flag(Problem, imax, jmax, Flag, ChemicalSources) != 1)
 	{
 		printf("Invalid obstacle. Program quits ...\n");
 		free_imatrix(Problem, 0, imax + 1, 0, jmax + 1);
@@ -181,7 +188,7 @@ int main(int argn, char** args)
 
 	/* init uvp - here the signature was extended to the problem
 	 * string to init u&v in the step case to 0 */
-	init_uvp(TI, UI, VI, PI, imax, jmax, problem, Flag, U, V, P, T);
+	init_uvp(TI, UI, VI, PI, imax, jmax, problem, Flag, U, V, P, T, C, s_max);
 
 	printf("\n");
 	printf("Geometric Domain:\n");
@@ -193,7 +200,7 @@ int main(int argn, char** args)
 	print_matrix(ChemicalSources,0, imax + 1, 0, jmax + 1);
 	printf("\n");
 
-
+	init_staticConcentrations(C, ChemicalSources, s_max, imax, jmax);
 
 //	printf("init U\n");
 //	print_matrixD(U,0, imax + 1, 0, jmax + 1);
@@ -249,7 +256,8 @@ int main(int argn, char** args)
 
 		if (t > t_print)
 	 	{
-	 		write_vtkFile(output_filename_array, n, imax, jmax, dx, dy, U, V, P, T);
+	 		write_vtkFile(output_filename_array, n, imax, jmax, dx, dy, U, V, P, T,
+	 				C, s_max);
 	 		t_print += dt_value;
 	 	}
 

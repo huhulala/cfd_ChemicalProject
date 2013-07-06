@@ -32,7 +32,8 @@ int read_parameters( const char *szFileName,       /* name of the file */
                     double *tl,
                     double *tr,
                     double *tb,
-                    double *tt
+                    double *tt,
+                    int *s_max
 )
 {
    READ_DOUBLE( szFileName, *xlength );
@@ -65,6 +66,9 @@ int read_parameters( const char *szFileName,       /* name of the file */
    READ_INT( szFileName, *wt );
    READ_INT( szFileName, *wb );
    READ_INT   ( szFileName, *itermax );
+
+   /*read source count*/
+   READ_INT( szFileName, *s_max );
    return 1;
 }
 
@@ -75,10 +79,13 @@ int read_parameters( const char *szFileName,       /* name of the file */
  * the whole domain.
  */
 void init_uvp(double TI, double UI, double VI, double PI, int imax, int jmax,
-		char* problem, int **Flag, double **U, double **V, double **P, double **T)
+		char* problem, int **Flag, double **U, double **V, double **P, double **T,
+		  double*** C, int s_max)
 {
 	int i;
 	int j;
+	int k;
+
 	for(j=1; j<=jmax; j++)
 	for(i=1; i<=imax; i++)
 	{
@@ -104,8 +111,29 @@ void init_uvp(double TI, double UI, double VI, double PI, int imax, int jmax,
         for (j = 0; j < (jmax+2)/2; ++j)
         	U[i][j] = 0;
     }
+
+    for (k = 0; k < s_max; k++)
+    {
+        init_matrix(C[k], 1, imax, 1, jmax, 0);
+    }
 }
 
+void init_staticConcentrations(double*** C,int **Sources, int s_max, int imax,int jmax)
+{
+    int i = 0;
+    int j = 0;
+    int k = 0;
+
+    for (k = 0; k < s_max; ++k)
+    for (i = 1; i <= imax; ++i)
+    for (j = 1; j <= jmax; ++j)
+    {
+    	if( Sources[i][j] == k+1)
+    	{
+    		 C[k][i][j] = 0.2;
+        }
+    }
+}
 
 /**  Init the flag field **/
 int init_flag(int **Problem,int imax,int jmax, int **Flag, int **Sources)

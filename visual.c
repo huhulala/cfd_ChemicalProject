@@ -4,9 +4,10 @@
 
 void write_vtkFile(const char *szProblem, int timeStepNumber, int imax, int jmax,
 		double dx, double dy, double **U,
-		double **V, double **P, double **T) {
+		double **V, double **P, double **T,
+		double*** C, int s_max) {
 
-	int i, j;
+	int i, j , k;
 	char szFileName[80];
 	FILE *fp = NULL;
 	sprintf(szFileName, "%s.%i.vtk", szProblem, timeStepNumber);
@@ -47,6 +48,20 @@ void write_vtkFile(const char *szProblem, int timeStepNumber, int imax, int jmax
 	for(j = 1; j < jmax+1; j++)
 		for(i = 1; i < imax+1; i++)
 			fprintf(fp, "%f\n", T[i][j]);
+
+
+    k = 0;
+    for (k = 0; k < s_max; ++k)
+    {
+    	fprintf(fp, "\n");
+    	fprintf(fp, "\nSCALARS Species_%i float 1 \n",k+1);
+    	fprintf(fp, "LOOKUP_TABLE default \n");
+     	for (j = 1; j < jmax+1; j++)
+    	for (i = 1; i < imax+1; i++)
+    	{
+    	      fprintf(fp, "%f\n", C[k][i][j]);
+    	}
+     }
 
 	if (fclose(fp)) {
 		char szBuff[80];
