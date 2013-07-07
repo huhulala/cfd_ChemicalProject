@@ -45,7 +45,7 @@ int main(int argn, char** args)
 	double Re, UI, VI, TI , PI, GX, GY;
 	double t_end, xlength, ylength;
 	double dt, dx, dy;
-	double alpha, gamma, omg, tau;
+	double alpha, gamma, omg, tau, lambda;
 	double eps, dt_value, res, t, deltaP;
 	int itermax, it, n;
 	double t_print;
@@ -95,7 +95,7 @@ int main(int argn, char** args)
 	char problemImageName[64];
 	char szFileName[64];
 
-	int s_max;
+	int s_max;/* Number of chemical substances */
 
 	int verbose = 1; /* verbose flag */
 	int debug = 1; /* verbose flag */
@@ -112,9 +112,10 @@ int main(int argn, char** args)
 		|| strcmp(args[1], "cavity") == 0
 		|| strcmp(args[1], "rayleigh") == 0
 		|| strcmp(args[1], "rayleigh_plane")== 0
-		|| strcmp(args[1], "diffusion") == 0))
+		|| strcmp(args[1], "diffusion") == 0
+		|| strcmp(args[1], "karman_diffusion") == 0))
 	{
-		printf("ERROR: pass cavity, rayleigh, rayleigh_plane, fluidTrap, karman, plane or step\n");
+		printf("ERROR: pass cavity, rayleigh, rayleigh_plane, fluidTrap, karman, karman_diffusion, plane or step\n");
 		return 1;
 	}
 
@@ -142,7 +143,7 @@ int main(int argn, char** args)
 	/* grid size (dx,dy,imax,ymax) should now be read from the image */
     read_parameters(inputDirCharArray,&Re,&UI,&VI,&PI,&GX,&GY,&t_end,&xlength,&ylength,&dt,&alpha,
     		        &omg,&tau,&itermax,&eps,&wl,&wr,&wt, &wb, &dt_value, &deltaP, &TI, &beta, &gamma,
-    		        &Pr,&tl,&tr, &tb,&tt,&s_max);
+    		        &Pr,&tl,&tr, &tb,&tt, &s_max, &lambda);
 
     /* assemble problem file string */
 	strcpy(problemImageName, inputString);
@@ -188,7 +189,7 @@ int main(int argn, char** args)
 
 	/* init uvp - here the signature was extended to the problem
 	 * string to init u&v in the step case to 0 */
-	init_uvp(TI, UI, VI, PI, imax, jmax, problem, Flag, U, V, P, T, C, s_max);
+	init_uvp(TI, UI, VI, PI, imax, jmax, problem, Flag, U, V, P, T, C, Q, s_max);
 
 	printf("\n");
 	printf("Geometric Domain:\n");
@@ -202,24 +203,27 @@ int main(int argn, char** args)
 
 	init_staticConcentrations(C, ChemicalSources, s_max, imax, jmax);
 
-//	printf("init U\n");
-//	print_matrixD(U,0, imax + 1, 0, jmax + 1);
+//	printf("init C0\n");
+//	print_matrixD(C[0] ,0, imax + 1, 0, jmax + 1);
 
 	t_print = 0;
 	while (t < t_end)
 	{
 		/*calculate the timestep */
-        calculate_dt(Re, Pr, tau, &dt, dx, dy, imax,jmax, U,V);
+        calculate_dt(Re, Pr, tau, &dt, dx, dy, imax,jmax, s_max, U,V, C, lambda);
 
         /*calculate the boundary values   */
 		boundaryvalues( imax, jmax,dx,dy, wl, wr, wt, wb, U, V, F, G, P, T, Flag,
-				tl,tr, tb,tt);
+				tl,tr, tb,tt,C,s_max);
 
     	/* set special boundary values*/
-	    spec_boundary_val( problem, imax, jmax, dx, dy, Re, deltaP, U, V, P,T);
+	    spec_boundary_val( problem, imax, jmax, s_max, dx, dy, Re, deltaP, U, V, P, T, C);
 
 	    /* calculate new temperature values */
 	    calculate_Temp(U, V, T, Flag, imax, jmax, dt, dx, dy, alpha, Re, Pr);
+
+	    calculate_Concentrations(U, V, C, Q, Flag, imax, jmax, s_max, dt, dx, dy,
+	   		lambda, alpha); /* TODO: gamma2 ? */
 
 
 		//printf("calculate_Temp T\n");
@@ -259,15 +263,14 @@ int main(int argn, char** args)
 	 		write_vtkFile(output_filename_array, n, imax, jmax, dx, dy, U, V, P, T,
 	 				C, s_max);
 	 		t_print += dt_value;
+			if (verbose)
+			{
+				printf("write outputfile - step-counter: %i, time: %f, sor-interations: %i  \n",n, t, it);
+			}
 	 	}
 
 	 	t = t + dt;
 		n++;
-		if (verbose)
-		{
-			if (t > t_print)
-				printf("write outputfile - step-counter: %i, time: %f, sor-interations: %i  \n",n, t, it);
-		}
 	}
 	//write_vtkFile(output_filename_array, n, imax, jmax, dx, dy, U, V, P);
 

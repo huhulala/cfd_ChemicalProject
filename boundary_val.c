@@ -8,9 +8,11 @@
 void boundaryvalues(int imax, int jmax, double dx, double dy, int wl, int wr,
 		int wt, int wb, double **U, double **V, double **F, double **G,
 		double **P, double **T, int** Flag, double tl, double tr, double tb,
-		double tt) {
+		double tt,double ***C,int s_max) {
+
 	int i = 0;
 	int j = 0;
+	int k = 0;
 
 	for (i = 1; i <= imax; i++) {
 		/* lower bounder */
@@ -82,8 +84,6 @@ void boundaryvalues(int imax, int jmax, double dx, double dy, int wl, int wr,
 
 		T[imax+1][j] = T[imax][j];
 	}
-
-
 
 	/* set the values of the inner obstacles */
 	/* treat obstacle boundaries, see 1.4 to 1.6 */
@@ -174,6 +174,21 @@ void boundaryvalues(int imax, int jmax, double dx, double dy, int wl, int wr,
 		}
 	}
 
+    for (k = 0; k < s_max; ++k)
+    {
+        /** left and right wall **/
+        for (j = 0; j <= jmax; ++j)
+        {
+             C[k][0][j] = -C[k][1][j];
+             C[k][imax+1][j] = C[k][imax][j];
+        }
+
+        for(i = 0; i <= imax; ++i)
+        {
+        	C[k][i][0] = C[k][i][1];
+            C[k][i][jmax+1] = C[k][i][jmax];
+        }
+    }
 }
 
 /**
@@ -345,8 +360,10 @@ void boundaryvalues1(int imax, int jmax, double **U, double **V, const int wl,
 
 }
 
-void spec_boundary_val(char *problem, int imax, int jmax, double dx, double dy,
-		double Re, double deltaP, double **U, double **V, double **P, double **T) {
+void spec_boundary_val(char *problem, int imax, int jmax, int s_max, double dx, double dy,
+		double Re, double deltaP, double **U, double **V, double **P, double **T,
+		double ***C) {
+	int s;
 	int j = 0;
 	if (strcmp(problem, "karman") == 0) {
 		for (j = 1; j <= jmax; ++j) {
@@ -354,7 +371,16 @@ void spec_boundary_val(char *problem, int imax, int jmax, double dx, double dy,
 			U[0][j] = 1.0;
 			V[0][j] = 0.0;
 		}
-	} else if (strcmp(problem, "step") == 0) {
+	}
+	else if (strcmp(problem, "karman_diffusion") == 0) {
+		for (j = 1; j <= jmax; ++j) {
+			/* set karman inflow */
+			U[0][j] = 1.0;
+			V[0][j] = 0.0;
+		}
+	}
+	else if (strcmp(problem, "step") == 0)
+	{
 		/* set step inflow - only upper half */
 		for (j = (jmax + 2) / 2 + 1; j < jmax + 1; ++j) {
 			U[0][j] = 1.0;
@@ -364,7 +390,6 @@ void spec_boundary_val(char *problem, int imax, int jmax, double dx, double dy,
 			U[0][j] = 0.0;
 			V[0][j] = 0.0;
 		}
-
 	}
 	//  Rayleigh-Benard flow: top T = -0.5 bottom T = 0.5
 	//  left and right walls adiabatic,

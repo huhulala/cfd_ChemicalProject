@@ -69,7 +69,8 @@ int read_parameters(
   double *tr,
   double *tb,
   double *tt,
-  int *s_max
+  int *s_max,
+  double *lambda
 );
 
 /**
@@ -90,6 +91,7 @@ void init_uvp(
   double **P,
   double **T,
   double*** C,
+  double*** Q,
   int s_max
 );
 

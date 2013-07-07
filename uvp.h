@@ -99,8 +99,11 @@ void calculate_dt(
   double dy,
   int imax,
   int jmax,
+  int s_max,
   double **U,
-  double **V
+  double **V,
+  double ***C,
+  double lambda
 );
 
 
@@ -135,5 +138,10 @@ void calculate_uv(
 void calculate_Temp(double **U, double **V, double **T, int **Flag, int imax, int jmax,
 		double dt, double dx, double dy, double gamma,
 		double Re, double Pr);
+
+/* Calculates the concentrations of each substance */
+void calculate_Concentrations(double **U, double **V, double ***C, double ***Q,
+		int **Flag, int imax, int jmax, int s_max, double dt, double dx, double dy,
+		double lambda, double gamma2);
 
 #endif

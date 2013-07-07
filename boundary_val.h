@@ -24,7 +24,9 @@ void boundaryvalues(
   double tl,
   double tr,
   double tb,
-  double tt
+  double tt,
+  double ***C,
+  int s_max
 );
 
 void boundaryvalues1(
@@ -38,7 +40,6 @@ void boundaryvalues1(
 		const int wb,
 		int **Flag
 );
-/**
 
 /*Set special boundary*/
 
@@ -46,6 +47,7 @@ void spec_boundary_val(
     char *problem,
     int imax,
     int jmax,
+    int s_max,
     double dx,
     double dy,
     double Re,
@@ -53,7 +55,8 @@ void spec_boundary_val(
     double **U,
     double **V,
     double **P,
-    double **T
+    double **T,
+    double ***C
 );
 
 #endif

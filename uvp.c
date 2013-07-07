@@ -3,6 +3,7 @@
 #include "uvp.h"
 #include "fd.h"
 #include <math.h>
+#include <limits.h>
 #include "NSDefinitions.h"
 
 void calculate_fg(double Re, double GX, double GY, double alpha, double beta,
@@ -77,76 +78,46 @@ void calculate_fg(double Re, double GX, double GY, double alpha, double beta,
 }
 
 void calculate_dt(double Re, double Pr, double tau, double *dt, double dx,
-		double dy, int imax, int jmax, double **U, double **V) {
+		double dy, int imax, int jmax, int s_max, double **U, double **V, double ***C, double lambda) {
 	/* See formula 13 */
 	double umax = fabs(U[1][1]);
 	double vmax = fabs(V[1][1]);
-	double dtcon, dxcon, dycon, dttcon;
+	double dtcon, dxcon, dycon, dttcon, dtdcond;
 	double min;
 	int i;
 	int j;
 
 	for (j = 1; j <= jmax; j++)
-		for (i = 1; i <= imax; i++) {
+	for (i = 1; i <= imax; i++) {
 			if (fabs(U[i][j]) > umax)
 				umax = fabs(U[i][j]);
 			if (fabs(V[i][j]) > vmax)
 				vmax = fabs(V[i][j]);
-		}
+	}
 
 	/* conditions */
+	dtdcond = lambda/(2*(1/(dx*dx) + 1/(dy*dy)));
 	dtcon = Pr * Re / (2 * (1 / (dx * dx) + 1 / (dy * dy)));
-    dttcon = Re/(2*(1/(dx*dx) + 1/(dy*dy)));
+	dttcon = Re/(2*(1/(dx*dx) + 1/(dy*dy)));
 
 	dxcon = dx / fabs(umax);
 	dycon = dy / fabs(vmax);
 
 	/* determine smalles condition */
 	min = dtcon;
-	if (min > dxcon)
+    if (min > dxcon && dxcon > 0)
 		min = dxcon;
-	if (min > dycon)
+	if (min > dycon && dycon > 0)
 		min = dycon;
-	if (min > dttcon)
+	if (min > dttcon && dttcon > 0)
 		min = dttcon;
+	if (min > dtdcond && dtdcond > 0)
+		min = dtdcond;
 
 	/* calculate dt */
 	*dt = tau * min;
 }
 
-void calculate_dt1(double Re, double tau, double *dt, double dx, double dy,
-		int imax, int jmax, double **U, double **V, int **Flag) {
-	/*calculates maximum absolute velocities in x and y direction*/
-	double umax = 0, vmax = 0;
-	double a, b, c;
-	int i, j;
-	for (i = 1; i <= imax; i++) {
-		for (j = 1; j <= jmax; j++) {
-			if ((Flag[i][j] & B_C) == B_C) {
-				if (abs(U[i][j]) > umax)
-					umax = abs(U[i][j]);
-
-				if (abs(V[i][j]) > vmax)
-					vmax = abs(V[i][j]);
-
-			}
-		}
-	}
-
-	/*Determines the minimum of dt according to stability criteria and multiply it by safety factor tau if tau is positive, otherwise uses the default value of dt*/
-	if (tau > 0) {
-		a = Re / (2.0 * (1.0 / (dx * dx) + 1.0 / (dy * dy)));
-		b = dx / umax;
-		c = dy / vmax;
-		if (a < b && a < c) {
-			*dt = tau * a;
-		} else if (b < a && b < c) {
-			*dt = tau * b;
-		} else {
-			*dt = tau * c;
-		}
-	}
-}
 
 void calculate_uv(double dt, double dx, double dy, int imax, int jmax,
 		double **U, double **V, double **F, double **G, double **P, int **Flag) {
@@ -418,4 +389,43 @@ void calculate_Temp(double **U, double **V, double **TEMP, int **Flag,
 			}
 
 		}
+}
+
+void calculate_Concentrations(double **U, double **V, double ***C, double ***Q,
+		int **Flag, int imax, int jmax, int s_max, double dt, double dx, double dy,
+		double lambda, double gamma2)
+{
+	/* equal to energy transfer equation */
+	int i,j,s;
+	//printf("C 11/8: %f, C 11/9: %f\n", C[0][11][8], C[0][11][9]);
+	//printf("lambda: %f, dx: %f, dt: %f\n", lambda, dx, dt);
+	for(s=0; s<s_max; s++)
+		for(j=1; j<=jmax; j++)
+			for(i=1; i<=imax; i++)
+				if(Flag[i][j] >= C_F)
+				{
+
+
+					double ducdx = 1/dx*(U[i][j]*(C[s][i][j]+C[s][i+1][j])/2 - U[i-1][j]*(C[s][i-1][j] + C[s][i][j])/2)
+										- gamma2/dx*(fabs(U[i][j])*(C[s][i][j] -C[s][i+1][j])/2 - fabs(U[i-1][j])*(C[s][i-1][j] - C[s][i][j])/2);
+
+					double dvcdy = 1/dy*(V[i][j]*(C[s][i][j]+C[s][i][j+1])/2 - V[i][j-1]*(C[s][i][j-1] + C[s][i][j])/2)
+										- gamma2/dy*(fabs(V[i][j])*(C[s][i][j] - C[s][i][j+1])/2 - fabs(V[i][j-1])*(C[s][i][j-1] - C[s][i][j])/2);
+
+					C[s][i][j] = C[s][i][j] + dt *
+						(lambda *
+							(
+								(C[s][i+1][j] - 2*C[s][i][j] + C[s][i-1][j])/(dx*dx) +
+								(C[s][i][j+1] - 2*C[s][i][j] + C[s][i][j-1])/(dy*dy)
+							)
+							- ducdx
+							- dvcdy
+							+ Q[s][i][j]
+						);
+
+					/*if(C[s][i][j] < 0)
+						C[s][i][j] = 0;
+					if(C[s][i][j] > 1)
+						C[s][i][j] = 1;*/
+				}
 }

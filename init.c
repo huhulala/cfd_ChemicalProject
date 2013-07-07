@@ -33,7 +33,8 @@ int read_parameters( const char *szFileName,       /* name of the file */
                     double *tr,
                     double *tb,
                     double *tt,
-                    int *s_max
+                    int *s_max,
+                    double *lambda
 )
 {
    READ_DOUBLE( szFileName, *xlength );
@@ -55,6 +56,7 @@ int read_parameters( const char *szFileName,       /* name of the file */
    READ_DOUBLE( szFileName, *TI );
    READ_DOUBLE( szFileName, *beta );
    READ_DOUBLE( szFileName, *gamma );
+   READ_DOUBLE( szFileName, *lambda );
    READ_DOUBLE( szFileName, *Pr );
    READ_DOUBLE( szFileName, *tl );
    READ_DOUBLE( szFileName, *tr );
@@ -80,7 +82,7 @@ int read_parameters( const char *szFileName,       /* name of the file */
  */
 void init_uvp(double TI, double UI, double VI, double PI, int imax, int jmax,
 		char* problem, int **Flag, double **U, double **V, double **P, double **T,
-		  double*** C, int s_max)
+		  double*** C, double ***Q, int s_max)
 {
 	int i;
 	int j;
@@ -115,6 +117,7 @@ void init_uvp(double TI, double UI, double VI, double PI, int imax, int jmax,
     for (k = 0; k < s_max; k++)
     {
         init_matrix(C[k], 1, imax, 1, jmax, 0);
+        init_matrix(Q[k], 1, imax, 1, jmax, 0);
     }
 }
 
