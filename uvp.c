@@ -77,6 +77,68 @@ void calculate_fg(double Re, double GX, double GY, double alpha, double beta,
 	}
 }
 
+/*
+void calculate_dt(double Re, double Pr, double tau, double *dt, double dx,
+		double dy, int imax, int jmax, int s_max, double **U, double **V, double ***C, double lambda) {
+	// See formula 13
+	double umax = fabs(U[1][1]);
+	double vmax = fabs(V[1][1]);
+	double dtcon, dxcon, dycon, dttcon, dccon;
+	double min;
+	int i, j, s;
+
+	for (j = 1; j <= jmax; j++)
+		for (i = 1; i <= imax; i++) {
+			if (fabs(U[i][j]) > umax)
+				umax = fabs(U[i][j]);
+			if (fabs(V[i][j]) > vmax)
+				vmax = fabs(V[i][j]);
+		}
+	// Compute maximal concentration difference
+	dccon = fabs(C[0][1][1] - C[0][1][2]);
+	for(s = 0; s < s_max; s++)
+		for(j = 1; j<= jmax; j++)
+			for(i = 1; i <= imax; i++)
+			{
+				if(fabs(C[s][i][j] - C[s][i][j+1]) > dccon)
+					dccon = fabs(C[s][i][j] - C[s][i][j+1]);
+				if(fabs(C[s][i][j] - C[s][i+1][j]) > dccon)
+					dccon = fabs(C[s][i][j] - C[s][i+1][j]);
+			}
+	dccon = dx*(1-dccon);
+
+	// conditions
+	dtcon = Pr * Re / (2 * (1 / (dx * dx) + 1 / (dy * dy)));
+    dttcon = Re/(2*(1/(dx*dx) + 1/(dy*dy)));
+
+    if(umax != 0 && vmax != 0)
+    {
+		dxcon = dx / fabs(umax);
+		dycon = dy / fabs(vmax);
+    }
+    else
+    {
+    	// values that should never be used
+    	dxcon = LONG_MAX;
+    	dycon = LONG_MAX;
+    }
+
+	// determine smalles condition
+	min = dtcon;
+	if (min > dxcon)
+		min = dxcon;
+	if (min > dycon)
+		min = dycon;
+	if (min > dttcon)
+		min = dttcon;
+	if (min > dccon)
+		min = dccon;
+
+	// calculate dt
+	*dt = tau * min;
+}
+*/
+
 void calculate_dt(double Re, double Pr, double tau, double *dt, double dx,
 		double dy, int imax, int jmax, int s_max, double **U, double **V, double ***C, double lambda) {
 	/* See formula 13 */
@@ -285,7 +347,7 @@ void calculate_fg1(double Re, double GX, double GY, double alpha, double dt,
 }
 
 void calculate_Temp(double **U, double **V, double **TEMP, int **Flag,
-		int imax, int jmax, double dt, double dx, double dy, double gamma, double Re, double Pr) {
+		int imax, int jmax, double dt, double dx, double dy, double gamma, double Re, double Pr, double**H) {
 
 	double dutdx;
 	double d2tdx2;
@@ -350,7 +412,8 @@ void calculate_Temp(double **U, double **V, double **TEMP, int **Flag,
 								* (TEMP[i][j - 1] - TEMP[i][j]))) / dy;
 
 				double lala12 = TEMP[i][j] + dt
-						* (LAPLT / (Re * Pr) - DUTDX - DVTDY);
+									* (LAPLT / (Re * Pr) - DUTDX - DVTDY + H[i][j]);
+							TEMP[i][j] = lala12;
 				TEMP[i][j] = lala12;
 
 
@@ -407,10 +470,10 @@ void calculate_Concentrations(double **U, double **V, double ***C, double ***Q,
 
 
 					double ducdx = 1/dx*(U[i][j]*(C[s][i][j]+C[s][i+1][j])/2 - U[i-1][j]*(C[s][i-1][j] + C[s][i][j])/2)
-										- gamma2/dx*(fabs(U[i][j])*(C[s][i][j] -C[s][i+1][j])/2 - fabs(U[i-1][j])*(C[s][i-1][j] - C[s][i][j])/2);
+										+ gamma2/dx*(fabs(U[i][j])*(C[s][i][j] -C[s][i+1][j])/2 - fabs(U[i-1][j])*(C[s][i-1][j] - C[s][i][j])/2);
 
 					double dvcdy = 1/dy*(V[i][j]*(C[s][i][j]+C[s][i][j+1])/2 - V[i][j-1]*(C[s][i][j-1] + C[s][i][j])/2)
-										- gamma2/dy*(fabs(V[i][j])*(C[s][i][j] - C[s][i][j+1])/2 - fabs(V[i][j-1])*(C[s][i][j-1] - C[s][i][j])/2);
+										+ gamma2/dy*(fabs(V[i][j])*(C[s][i][j] - C[s][i][j+1])/2 - fabs(V[i][j-1])*(C[s][i][j-1] - C[s][i][j])/2);
 
 					C[s][i][j] = C[s][i][j] + dt *
 						(lambda *
@@ -428,4 +491,39 @@ void calculate_Concentrations(double **U, double **V, double ***C, double ***Q,
 					if(C[s][i][j] > 1)
 						C[s][i][j] = 1;*/
 				}
+}
+
+void chemical_reaction_irreversible(double ***C, double ***Q, double **H, int imax, int jmax, int s_max,
+		int a, int b, int c, int d, double dH)
+{
+	int i,j,s;
+	double reacted_concentration;
+
+	for(j=0; j<=jmax; j++)
+		for(i=0; i<=imax; i++)
+		{
+			/* loop through each cell to see if there are substances to react
+			 * C[0] and C[1] store reactant, C[2] and C[3] product concentrations */
+			if(C[0][i][j] != 0 && C[1][i][j] != 0)
+			{
+				/* Volume is constant, compute the portion that reacted */
+				reacted_concentration = C[0][i][j]/a;
+				if(C[1][i][j]/b < reacted_concentration)
+					reacted_concentration = C[1][i][j]/b;
+				/* Change concentrations */
+				Q[0][i][j] = -a * reacted_concentration;
+				Q[1][i][j] = -b * reacted_concentration;
+				Q[2][i][j] = c * reacted_concentration;
+				Q[3][i][j] = d * reacted_concentration;
+				/* Compute generated/consumed energy */
+				H[i][j] = dH * reacted_concentration;
+			}
+			else
+			{
+				/* No reaction */
+				for(s=0; s<s_max; s++)
+					Q[s][i][j] = 0;
+				H[i][j] = 0;
+			}
+		}
 }

@@ -21,10 +21,6 @@ void boundaryvalues(
   double **P,
   double **T,
   int **Flag,
-  double tl,
-  double tr,
-  double tb,
-  double tt,
   double ***C,
   int s_max
 );

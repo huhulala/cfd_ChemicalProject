@@ -2,7 +2,8 @@
 #include "init.h"
 #include "NSDefinitions.h"
 
-int read_parameters( const char *szFileName,       /* name of the file */
+int read_parameters(
+					const char *szFileName,       /* name of the file */
                     double *Re,                /* reynolds number   */
                     double *UI,                /* velocity x-direction */
                     double *VI,                /* velocity y-direction */
@@ -29,12 +30,13 @@ int read_parameters( const char *szFileName,       /* name of the file */
                     double *beta,
                     double *gamma,
                     double *Pr,
-                    double *tl,
-                    double *tr,
-                    double *tb,
-                    double *tt,
-                    int *s_max,
-                    double *lambda
+                    int *a,
+                    int *b,
+                    int *c,
+                    int *d,
+                    double *dH,
+                    double *lambda,
+                    int *static_substances
 )
 {
    READ_DOUBLE( szFileName, *xlength );
@@ -58,10 +60,6 @@ int read_parameters( const char *szFileName,       /* name of the file */
    READ_DOUBLE( szFileName, *gamma );
    READ_DOUBLE( szFileName, *lambda );
    READ_DOUBLE( szFileName, *Pr );
-   READ_DOUBLE( szFileName, *tl );
-   READ_DOUBLE( szFileName, *tr );
-   READ_DOUBLE( szFileName, *tb );
-   READ_DOUBLE( szFileName, *tt );
 
    READ_INT( szFileName, *wl );
    READ_INT( szFileName, *wr );
@@ -70,7 +68,15 @@ int read_parameters( const char *szFileName,       /* name of the file */
    READ_INT   ( szFileName, *itermax );
 
    /*read source count*/
-   READ_INT( szFileName, *s_max );
+   READ_INT( szFileName, *static_substances );
+
+   /* read chemical reaction coefficients and enthalpy of reaction */
+   READ_INT( szFileName, *a );
+   READ_INT( szFileName, *b );
+   READ_INT( szFileName, *c );
+   READ_INT( szFileName, *d );
+   READ_DOUBLE( szFileName, *dH );
+
    return 1;
 }
 
@@ -133,7 +139,7 @@ void init_staticConcentrations(double*** C,int **Sources, int s_max, int imax,in
     {
     	if( Sources[i][j] == k+1)
     	{
-    		 C[k][i][j] = 0.2;
+    		 C[k][i][j] = 0.4;
         }
     }
 }

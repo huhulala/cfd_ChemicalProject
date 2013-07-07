@@ -1,20 +1,20 @@
 #--------------------------------------------
 #            size of the domain             
 #--------------------------------------------
-xlength		10
-ylength		10
+xlength		2
+ylength		2
 
 #--------------------------------------------
 #            number of cells
 #--------------------------------------------
-imax		50
-jmax		50
+imax		20
+jmax		20
 
 #--------------------------------------------
 #               time steps
 #--------------------------------------------
 dt		0.05
-t_end	50.0
+t_end	20.0
 tau	 	0.5
 
 #--------------------------------------------
@@ -71,13 +71,13 @@ VI		0
 Pr		7
 
 #--------------------------------------------
-#       initialization substances/diffusion parameters
+#       initialization substances
 #--------------------------------------------
-static_substances 1
-lambda     0.25
+s_max    4
+lambda     0.01
 
 #--------------------------------------------
-#  chemical reaction aA + bB -> cC + dD parameters
+#  chemical reaction aA + bB -> cC + dD
 #--------------------------------------------
 a	1
 b	1
@@ -86,8 +86,12 @@ d	1
 dH	0.02
 
 #--------------------------------------------
-#       temperature parameters
+#       temperature values 
 #--------------------------------------------
 TI		0
+tl		0
+tr		0
+tb		0
+tt		0
 beta	 0.0063 
 gamma	 1

@@ -38,39 +38,41 @@
  * @param dt_value   time steps for output (after how many time steps one should
  *                   write into the output file)
  */
-int read_parameters( 
-  const char *szFileName,
-  double *Re,
-  double *UI,
-  double *VI,
-  double *PI,
-  double *GX,
-  double *GY,
-  double *t_end,
-  double *xlength,
-  double *ylength,
-  double *dt,
-  double *alpha,
-  double *omg,
-  double *tau,
-  int  *itermax,
-  double *eps,
-  int *wl,
-  int *wr,
-  int *wt,
-  int *wb,
-  double *dt_value,
-  double *deltaP,
-  double *TI,
-  double *beta,
-  double *gamma,
-  double *PR,
-  double *tl,
-  double *tr,
-  double *tb,
-  double *tt,
-  int *s_max,
-  double *lambda
+int read_parameters(
+					const char *szFileName,       /* name of the file */
+                    double *Re,                /* reynolds number   */
+                    double *UI,                /* velocity x-direction */
+                    double *VI,                /* velocity y-direction */
+                    double *PI,                /* pressure */
+                    double *GX,                /* gravitation x-direction */
+                    double *GY,                /* gravitation y-direction */
+                    double *t_end,             /* end time */
+                    double *xlength,           /* length of the domain x-dir.*/
+                    double *ylength,           /* length of the domain y-dir.*/
+                    double *dt,                /* time step */
+                    double *alpha,             /* uppwind differencing factor*/
+                    double *omg,               /* relaxation factor */
+                    double *tau,               /* safety factor for time step*/
+                    int  *itermax,             /* max. number of iterations  */
+		                                        /* for pressure per time step */
+                    double *eps,               /* accuracy bound for pressure*/
+                    int    *wl,
+                    int    *wr,
+                    int    *wt,
+                    int    *wb,
+        		    double *dt_value,            /* time for output */
+                    double *deltaP,
+                    double *TI,
+                    double *beta,
+                    double *gamma,
+                    double *Pr,
+                    int *a,
+                    int *b,
+                    int *c,
+                    int *d,
+                    double *dH,
+                    double *lambda,
+                    int *static_substances
 );
 
 /**

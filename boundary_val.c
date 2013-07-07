@@ -7,8 +7,7 @@
  */
 void boundaryvalues(int imax, int jmax, double dx, double dy, int wl, int wr,
 		int wt, int wb, double **U, double **V, double **F, double **G,
-		double **P, double **T, int** Flag, double tl, double tr, double tb,
-		double tt,double ***C,int s_max) {
+		double **P, double **T, int** Flag, double ***C,int s_max) {
 
 	int i = 0;
 	int j = 0;

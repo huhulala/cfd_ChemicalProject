@@ -47,16 +47,12 @@ int main(int argn, char** args)
 	double dt, dx, dy;
 	double alpha, gamma, omg, tau, lambda;
 	double eps, dt_value, res, t, deltaP;
-	int itermax, it, n;
+	int itermax, it, n, initialStep;
 	double t_print;
+
 	/**************** dimensionless quantities for temperature  ****************/
 	double beta; /* cooefficient for termal expansion beta */
 	double Pr;   /* Prandtl number Pr */
-
-    double tl;
-    double tr;
-    double tb;
-    double tt;
 
 	int imax = 0;
 	int jmax = 0;
@@ -72,7 +68,7 @@ int main(int argn, char** args)
 	char inputDirCharArray[64];
 	char* problem;
 
-	/* arrays */
+	/* arrays for NS solver*/
 	double **U = NULL;
 	double **V = NULL;
 	double **P = NULL;
@@ -80,25 +76,37 @@ int main(int argn, char** args)
 	double **F = NULL;
 	double **G = NULL;
 
+	/* arrays for chemical quantities*/
     double*** C  = NULL;
     double*** Q  = NULL;
 
-	/*  array for temperature  */
+	/*  arrays for temperature  */
     double**  T = NULL;
+    double **H = NULL;
 
+    /*  initial pgm  */
 	int **Problem = NULL;
+	/*  flag fields for the sources and obstacles */
 	int **Flag = NULL;
-	/*  flag field for the sources  */
     int **ChemicalSources = NULL;
 
+    /* arrays for chemical quantities*/
 	char inputString[64];
 	char problemImageName[64];
 	char szFileName[64];
 
-	int s_max;/* Number of chemical substances */
+	/* Static value for substances ? */
+	int static_substances;
+	const int s_max = 4;
+
+	/* coefficents of chemical reaction aA + bB -> cC + dD */
+	int a,b,c,d;
+	/* entropy factor of reaction */
+	double dH;
 
 	int verbose = 1; /* verbose flag */
 	int debug = 1; /* verbose flag */
+	initialStep = 0;
 	/**************** Variable definition ends here  ****************/
 	/* check arguments */
 	if (argn <= 1)
@@ -113,7 +121,8 @@ int main(int argn, char** args)
 		|| strcmp(args[1], "rayleigh") == 0
 		|| strcmp(args[1], "rayleigh_plane")== 0
 		|| strcmp(args[1], "diffusion") == 0
-		|| strcmp(args[1], "karman_diffusion") == 0))
+		|| strcmp(args[1], "karman_diffusion") == 0
+		|| strcmp(args[1], "reaction_irreversible") == 0))
 	{
 		printf("ERROR: pass cavity, rayleigh, rayleigh_plane, fluidTrap, karman, karman_diffusion, plane or step\n");
 		return 1;
@@ -143,7 +152,7 @@ int main(int argn, char** args)
 	/* grid size (dx,dy,imax,ymax) should now be read from the image */
     read_parameters(inputDirCharArray,&Re,&UI,&VI,&PI,&GX,&GY,&t_end,&xlength,&ylength,&dt,&alpha,
     		        &omg,&tau,&itermax,&eps,&wl,&wr,&wt, &wb, &dt_value, &deltaP, &TI, &beta, &gamma,
-    		        &Pr,&tl,&tr, &tb,&tt, &s_max, &lambda);
+    		        &Pr, &a, &b, &c, &d, &dH, &lambda,&static_substances);
 
     /* assemble problem file string */
 	strcpy(problemImageName, inputString);
@@ -168,6 +177,7 @@ int main(int argn, char** args)
 
 	/* allocate memory for the temperature  */
 	T   = matrix(0, imax + 1, 0, jmax + 1);
+	H   = matrix(0, imax + 1, 0, jmax + 1);/* generated or consumed chemical energy */
 
 	/* allocate memory for the chemical arrays  */
 	C  = matrix3d(0, imax + 1, 0, jmax + 1, s_max);
@@ -201,7 +211,10 @@ int main(int argn, char** args)
 	print_matrix(ChemicalSources,0, imax + 1, 0, jmax + 1);
 	printf("\n");
 
-	init_staticConcentrations(C, ChemicalSources, s_max, imax, jmax);
+	if(static_substances)
+	{
+		init_staticConcentrations(C, ChemicalSources, s_max, imax, jmax);
+	}
 
 //	printf("init C0\n");
 //	print_matrixD(C[0] ,0, imax + 1, 0, jmax + 1);
@@ -209,18 +222,30 @@ int main(int argn, char** args)
 	t_print = 0;
 	while (t < t_end)
 	{
+		if (!initialStep)
+	 	{
+	 		write_vtkFile(output_filename_array, n, imax, jmax, dx, dy, U, V, P, T,
+	 				C, s_max);
+	 		printf("write outputfile - step-counter: %i, time: 0, sor-interations: 0  \n",n);
+			initialStep = 1;
+	 	}
+
+
 		/*calculate the timestep */
         calculate_dt(Re, Pr, tau, &dt, dx, dy, imax,jmax, s_max, U,V, C, lambda);
 
         /*calculate the boundary values   */
 		boundaryvalues( imax, jmax,dx,dy, wl, wr, wt, wb, U, V, F, G, P, T, Flag,
-				tl,tr, tb,tt,C,s_max);
+				C,s_max);
 
     	/* set special boundary values*/
 	    spec_boundary_val( problem, imax, jmax, s_max, dx, dy, Re, deltaP, U, V, P, T, C);
 
+	    /* chemical reactions in each cell */
+	   // chemical_reaction_irreversible(C, Q, H, imax,jmax, s_max, a, b, c, d, dH);
+
 	    /* calculate new temperature values */
-	    calculate_Temp(U, V, T, Flag, imax, jmax, dt, dx, dy, alpha, Re, Pr);
+	    calculate_Temp(U, V, T, Flag, imax, jmax, dt, dx, dy, alpha, Re, Pr,H);
 
 	    calculate_Concentrations(U, V, C, Q, Flag, imax, jmax, s_max, dt, dx, dy,
 	   		lambda, alpha); /* TODO: gamma2 ? */

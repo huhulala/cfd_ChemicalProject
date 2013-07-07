@@ -137,11 +137,24 @@ void calculate_uv(
 /* Computes the new temperature values */
 void calculate_Temp(double **U, double **V, double **T, int **Flag, int imax, int jmax,
 		double dt, double dx, double dy, double gamma,
-		double Re, double Pr);
+		double Re, double Pr, double**H);
 
 /* Calculates the concentrations of each substance */
 void calculate_Concentrations(double **U, double **V, double ***C, double ***Q,
 		int **Flag, int imax, int jmax, int s_max, double dt, double dx, double dy,
 		double lambda, double gamma2);
+
+/* Computes the changement of temperature and concentration for each cell caused by
+ * an irreversible chemical reaction
+ * @param ***C	Array of concentrations
+ * @param ***Q	Change of concentrations
+ * @param **H	By reaction consumed/generated heat
+ * @param imax	Number of cells in x-direction
+ * @param jmax	Number of cells in y-direction
+ * @param s_max	Number of substances
+ * @param a,b,c,d	Coefficients of the reaction aA + bB -> cC + dD
+ * @param dH	Enthalpy of reaction, heat that gets free/consumed by one reaction */
+void chemical_reaction_irreversible(double ***C, double ***Q, double **H, int imax, int jmax, int s_max,
+		int a, int b, int c, int d, double dH);
 
 #endif
