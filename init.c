@@ -36,7 +36,12 @@ int read_parameters(
                     int *d,
                     double *dH,
                     double *lambda,
-                    int *static_substances
+                    int *static_substances,
+                    double    *cl,
+                    double    *cr,
+                    double    *ct,
+                    double    *cb
+
 )
 {
    READ_DOUBLE( szFileName, *xlength );
@@ -60,6 +65,11 @@ int read_parameters(
    READ_DOUBLE( szFileName, *gamma );
    READ_DOUBLE( szFileName, *lambda );
    READ_DOUBLE( szFileName, *Pr );
+
+   READ_DOUBLE( szFileName, *cl );
+   READ_DOUBLE( szFileName, *cr );
+   READ_DOUBLE( szFileName, *ct );
+   READ_DOUBLE( szFileName, *cb );
 
    READ_INT( szFileName, *wl );
    READ_INT( szFileName, *wr );

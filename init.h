@@ -72,7 +72,11 @@ int read_parameters(
                     int *d,
                     double *dH,
                     double *lambda,
-                    int *static_substances
+                    int *static_substances,
+                    double    *cl,
+                    double    *cr,
+                    double    *ct,
+                    double    *cb
 );
 
 /**

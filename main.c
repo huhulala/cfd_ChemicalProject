@@ -56,10 +56,18 @@ int main(int argn, char** args)
 
 	int imax = 0;
 	int jmax = 0;
+
+	/* boundary conditions for the walls */
 	int wl = 0;
 	int wr = 0;
 	int wt = 0;
 	int wb = 0;
+
+	/* boundary conditions for the species */
+	double cl = 0.0;
+	double cr = 0.0;
+	double ct = 0.0;
+	double cb = 0.0;
 
 	/* Output filename */
 	char* output_filename;
@@ -122,7 +130,8 @@ int main(int argn, char** args)
 		|| strcmp(args[1], "rayleigh_plane")== 0
 		|| strcmp(args[1], "diffusion") == 0
 		|| strcmp(args[1], "karman_diffusion") == 0
-		|| strcmp(args[1], "reaction_irreversible") == 0))
+		|| strcmp(args[1], "reaction_irreversible") == 0
+		|| strcmp(args[1], "baffle") == 0))
 	{
 		printf("ERROR: pass cavity, rayleigh, rayleigh_plane, fluidTrap, karman, karman_diffusion, plane or step\n");
 		return 1;
@@ -152,7 +161,7 @@ int main(int argn, char** args)
 	/* grid size (dx,dy,imax,ymax) should now be read from the image */
     read_parameters(inputDirCharArray,&Re,&UI,&VI,&PI,&GX,&GY,&t_end,&xlength,&ylength,&dt,&alpha,
     		        &omg,&tau,&itermax,&eps,&wl,&wr,&wt, &wb, &dt_value, &deltaP, &TI, &beta, &gamma,
-    		        &Pr, &a, &b, &c, &d, &dH, &lambda,&static_substances);
+    		        &Pr, &a, &b, &c, &d, &dH, &lambda,&static_substances,&cl,&cr,&cb,&ct);
 
     /* assemble problem file string */
 	strcpy(problemImageName, inputString);
@@ -236,19 +245,26 @@ int main(int argn, char** args)
 
         /*calculate the boundary values   */
 		boundaryvalues( imax, jmax,dx,dy, wl, wr, wt, wb, U, V, F, G, P, T, Flag,
-				C,s_max);
+				C,s_max,
+				cl,
+                cr,
+                cb,
+                ct);
 
     	/* set special boundary values*/
 	    spec_boundary_val( problem, imax, jmax, s_max, dx, dy, Re, deltaP, U, V, P, T, C);
 
 	    /* chemical reactions in each cell */
-	   // chemical_reaction_irreversible(C, Q, H, imax,jmax, s_max, a, b, c, d, dH);
+	    chemical_reaction_irreversible(C, Q, H, imax,jmax, s_max, a, b, c, d, dH);
 
 	    /* calculate new temperature values */
 	    calculate_Temp(U, V, T, Flag, imax, jmax, dt, dx, dy, alpha, Re, Pr,H);
 
 	    calculate_Concentrations(U, V, C, Q, Flag, imax, jmax, s_max, dt, dx, dy,
 	   		lambda, alpha); /* TODO: gamma2 ? */
+
+		//printf("init C0\n");
+		//print_matrixD(C[0] ,0, imax + 1, 0, jmax + 1);
 
 
 		//printf("calculate_Temp T\n");
@@ -284,6 +300,8 @@ int main(int argn, char** args)
 
 
 		if (t > t_print)
+	     //if( ((int)t) % ((int)dt_value) == 0
+	     //       && t > n*dt_value)
 	 	{
 	 		write_vtkFile(output_filename_array, n, imax, jmax, dx, dy, U, V, P, T,
 	 				C, s_max);

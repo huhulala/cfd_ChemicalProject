@@ -7,7 +7,11 @@
  */
 void boundaryvalues(int imax, int jmax, double dx, double dy, int wl, int wr,
 		int wt, int wb, double **U, double **V, double **F, double **G,
-		double **P, double **T, int** Flag, double ***C,int s_max) {
+		double **P, double **T, int** Flag, double ***C,int s_max,
+		  double cl,
+		  double cr,
+		  double cb,
+		  double ct) {
 
 	int i = 0;
 	int j = 0;
@@ -173,19 +177,35 @@ void boundaryvalues(int imax, int jmax, double dx, double dy, int wl, int wr,
 		}
 	}
 
+	 /** concentration goes here;
+	  * either boundary cons or inflow **/
     for (k = 0; k < s_max; ++k)
     {
         /** left and right wall **/
         for (j = 0; j <= jmax; ++j)
         {
-             C[k][0][j] = -C[k][1][j];
-             C[k][imax+1][j] = C[k][imax][j];
-        }
+         	if(cl == 0.0)
+         	  C[k][0][j] = -C[k][1][j];
+         	else if(cl > 0.0)
+         	  C[k][0][j] = 2*cl - C[k][1][j];
 
+         	if(cr == 0.0)
+         	  C[k][imax+1][j] = C[k][imax][j];
+         	else if(cr > 0.0)
+         	  C[k][imax+1][j] = 2*cr-C[k][imax][j];
+        }
+        /** top and bottom wall **/
         for(i = 0; i <= imax; ++i)
         {
-        	C[k][i][0] = C[k][i][1];
-            C[k][i][jmax+1] = C[k][i][jmax];
+        	if(cb == 0.0)
+        	  C[k][i][0] = C[k][i][1];
+        	else if(cb > 0.0)
+              C[k][i][0] = 2*cb - C[k][i][1];
+
+        	if(ct == 0.0)
+              C[k][i][jmax+1] = C[k][i][jmax];
+        	else if(ct > 0.0)
+              C[k][i][0] = 2*ct - C[k][i][jmax];
         }
     }
 }
@@ -364,7 +384,7 @@ void spec_boundary_val(char *problem, int imax, int jmax, int s_max, double dx, 
 		double ***C) {
 	int s;
 	int j = 0;
-	if (strcmp(problem, "karman") == 0) {
+	if (strcmp(problem, "karman") == 0 || strcmp(problem, "baffle") == 0) {
 		for (j = 1; j <= jmax; ++j) {
 			/* set karman inflow */
 			U[0][j] = 1.0;
