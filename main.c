@@ -139,7 +139,7 @@ int main(int argn, char** args)
 
 	/*************** parameter loading and problem input goes here *************************/
 
-	t = 0.1;
+	t = dt;
 	n = 0;
 	problem = args[1];
 	/* assemble parameter file string */
@@ -225,20 +225,9 @@ int main(int argn, char** args)
 		init_staticConcentrations(C, ChemicalSources, s_max, imax, jmax);
 	}
 
-//	printf("init C0\n");
-//	print_matrixD(C[0] ,0, imax + 1, 0, jmax + 1);
-
-	t_print = 0;
+	t_print = dt_value;
 	while (t < t_end)
 	{
-		if (!initialStep)
-	 	{
-	 		write_vtkFile(output_filename_array, n, imax, jmax, dx, dy, U, V, P, T,
-	 				C, s_max);
-	 		printf("write outputfile - step-counter: %i, time: 0, sor-interations: 0  \n",n);
-			initialStep = 1;
-	 	}
-
 
 		/*calculate the timestep */
         calculate_dt(Re, Pr, tau, &dt, dx, dy, imax,jmax, s_max, U,V, C, lambda);
@@ -254,6 +243,19 @@ int main(int argn, char** args)
     	/* set special boundary values*/
 	    spec_boundary_val( problem, imax, jmax, s_max, dx, dy, Re, deltaP, U, V, P, T, C);
 
+		//printf("calculate_Temp T\n");
+		//print_matrixD(T,0, imax + 1, 0, jmax + 1);
+
+
+	    if (!initialStep)
+	 	{
+	 		write_vtkFile(output_filename_array, n, imax, jmax, dx, dy, U, V, P, T,
+	 				C, s_max);
+	 		printf("write outputfile - step-counter: %i, time: 0, sor-interations: 0  \n",n);
+			initialStep = 1;
+			n++;
+	 	}
+
 	    /* chemical reactions in each cell */
 	    chemical_reaction_irreversible(C, Q, H, imax,jmax, s_max, a, b, c, d, dH);
 
@@ -263,22 +265,15 @@ int main(int argn, char** args)
 	    calculate_Concentrations(U, V, C, Q, Flag, imax, jmax, s_max, dt, dx, dy,
 	   		lambda, alpha); /* TODO: gamma2 ? */
 
-		//printf("init C0\n");
-		//print_matrixD(C[0] ,0, imax + 1, 0, jmax + 1);
-
-
-		//printf("calculate_Temp T\n");
-		//print_matrixD(T,0, imax + 1, 0, jmax + 1);
-
-		/*calculate F&G* - here the signature was extended to the FLAG
-	     * matrix to calculate values only for fluid cells */
-
 	    // some error in fg helper
 	    //calculate_fg( Re, GX, GY, alpha, dt, dx,dy, imax, jmax, U, V, F, G, Flag);
 		calculate_fg1(Re, GX, GY, alpha, dt, dx, dy, imax, jmax, U, V ,F , G, Flag ,T,beta);
 
 		//printf("G\n");
 		//print_matrixD(G,0, imax + 1, 0, jmax + 1);
+
+		//printf("F\n");
+		//print_matrixD(F,0, imax + 1, 0, jmax + 1);
 
 		/*calculate righthand site - here the signature was extended to the FLAG
 	     * matrix to calculate values only for fluid cells */
@@ -294,9 +289,21 @@ int main(int argn, char** args)
             sor(omg, dx, dy, imax, jmax, P, RS, &res, Flag, problem, deltaP);
 			it++;
 		}
+
+		//printf("init F\n");
+		//print_matrixD(F ,0, imax + 1, 0, jmax + 1);
+		//printf("init G\n");
+		//print_matrixD(G ,0, imax + 1, 0, jmax + 1);
+
 		/* calculate uv - here the signature was extended to the FLAG
 	     * matrix to calculate values only for fluid cells */
 	    calculate_uv(dt,dx,dy,imax,jmax, U, V, F, G, P, Flag);
+
+		//printf("init G\n");
+		//print_matrixD(G ,0, imax + 1, 0, jmax + 1);
+
+		//printf("init U\n");
+		//print_matrixD(U ,0, imax + 1, 0, jmax + 1);
 
 
 		if (t > t_print)
@@ -315,6 +322,11 @@ int main(int argn, char** args)
 	 	t = t + dt;
 		n++;
 	}
+
+	write_vtkFile(output_filename_array, n, imax, jmax, dx, dy, U, V, P, T,
+				C, s_max);
+
+
 	//write_vtkFile(output_filename_array, n, imax, jmax, dx, dy, U, V, P);
 
 	/* free arrays */

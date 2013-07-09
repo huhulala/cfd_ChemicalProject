@@ -191,15 +191,17 @@ void calculate_uv(double dt, double dx, double dy, int imax, int jmax,
 			/*
 			 * Check that the cell is a fluid cell.
 			 */
-			if ((Flag[i][j] & B_C) == B_C) {
+			//if ((Flag[i][j] & B_C) == B_C) {
 				/*Calculate the new velocity U according to the formula above*/
-				if (i < imax) {
+				//if (i < imax) {
+            if (Flag[i][j] >= C_F && Flag[i+1][j] >= C_F)
 					U[i][j] = F[i][j] - (dt / dx) * (P[i + 1][j] - P[i][j]);
-				}
+				//}
 				/*Calculate the new velocity V according to the formula above*/
-				if (j < jmax) {
-					V[i][j] = G[i][j] - (dt / dy) * (P[i][j + 1] - P[i][j]);
-				}
+				//if (j < jmax) {
+            	if (Flag[i][j] >= C_F && Flag[i][j+1] >= C_F){
+            		V[i][j] = G[i][j] - (dt / dy) * (P[i][j + 1] - P[i][j]);
+				//}
 			}
 		}
 }
@@ -260,6 +262,10 @@ void calculate_fg1(double Re, double GX, double GY, double alpha, double dt,
 						/ 2 - abs(V[i][j - 1] + V[i + 1][j - 1]) / 2 * (U[i][j
 						- 1] - U[i][j]) / 2);
 
+				double lala1 = U[i][j] ;
+				double lala2 = dt* ((1 / Re) * (d2udx2 + d2udy2) - du2dx - duvdy + GX);
+				double lala =  dt*beta*GX*(T[i][j]+T[i+1][j])/2;
+
 
 				F[i][j] = U[i][j] + dt
 						* ((1 / Re) * (d2udx2 + d2udy2) - du2dx - duvdy + GX)
@@ -291,6 +297,10 @@ void calculate_fg1(double Re, double GX, double GY, double alpha, double dt,
 						/ 2 - abs(V[i][j - 1] + V[i][j]) / 2 * (V[i][j - 1]
 						- V[i][j]) / 2);
 
+				double lala1 = V[i][j];
+				double lala12 = T[i][j];
+				double lala123 = T[i][j+1];
+				double lala2 = dt* ((1 / Re) * (d2vdx2 + d2vdy2) - duvdx - dv2dy + GY);
 				double lala = dt*beta*GY*(T[i][j]+T[i][j+1])/2;
 
 
@@ -298,7 +308,8 @@ void calculate_fg1(double Re, double GX, double GY, double alpha, double dt,
 						* ((1 / Re) * (d2vdx2 + d2vdy2) - duvdx - dv2dy + GY)
 					       -dt*beta*GY*(T[i][j]+T[i][j+1])/2;
 
-
+				double lala3 = G[i][j];
+				lala3 = G[i][j];
 
 			}
 			else

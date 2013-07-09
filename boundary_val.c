@@ -418,14 +418,13 @@ void spec_boundary_val(char *problem, int imax, int jmax, int s_max, double dx, 
 	 {
 	     for(j=0; j<=jmax+1; j++)
 	     {
-	    	 T[0][j] = T[1][j];
-	    	 T[imax+1][j] = T[imax][j];
+	    	 T[0][j] = 0.5;
+	    	 T[imax+1][j] = -0.5;
 	      }
-
 	     for(j=0;j<=imax+1;j++)
 	     {
-	    	 T[j][0] = 2*(0.5)-T[j][1];
-	    	 T[j][jmax+1] = 2*(-0.5)-T[j][jmax];
+	    	 T[j][0] = T[j][1];
+		     T[j][jmax+1] = T[j][jmax] ;
 	     }
 	     return;
 	  }
@@ -454,8 +453,8 @@ void spec_boundary_val(char *problem, int imax, int jmax, int s_max, double dx, 
 
 	     for(j=0;j<=imax+1;j++)
 	     {
-	    	 T[j][0] = 2*(293.5)-T[j][1];
-	    	 T[j][jmax+1] = 2*(292.5)-T[j][jmax];
+	    	 T[j][0] = 0.5;
+	    	 T[j][jmax+1] = -0.5;
 	     }
 	     return;
 	  }
