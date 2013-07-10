@@ -77,7 +77,7 @@ void calculate_fg(double Re, double GX, double GY, double alpha, double beta,
 	}
 }
 
-/*
+
 void calculate_dt(double Re, double Pr, double tau, double *dt, double dx,
 		double dy, int imax, int jmax, int s_max, double **U, double **V, double ***C, double lambda) {
 	// See formula 13
@@ -137,48 +137,6 @@ void calculate_dt(double Re, double Pr, double tau, double *dt, double dx,
 	// calculate dt
 	*dt = tau * min;
 }
-*/
-
-void calculate_dt(double Re, double Pr, double tau, double *dt, double dx,
-		double dy, int imax, int jmax, int s_max, double **U, double **V, double ***C, double lambda) {
-	/* See formula 13 */
-	double umax = fabs(U[1][1]);
-	double vmax = fabs(V[1][1]);
-	double dtcon, dxcon, dycon, dttcon, dtdcond;
-	double min;
-	int i;
-	int j;
-
-	for (j = 1; j <= jmax; j++)
-	for (i = 1; i <= imax; i++) {
-			if (fabs(U[i][j]) > umax)
-				umax = fabs(U[i][j]);
-			if (fabs(V[i][j]) > vmax)
-				vmax = fabs(V[i][j]);
-	}
-
-	/* conditions */
-	dtdcond = lambda/(2*(1/(dx*dx) + 1/(dy*dy)));
-	dtcon = Pr * Re / (2 * (1 / (dx * dx) + 1 / (dy * dy)));
-	dttcon = Re/(2*(1/(dx*dx) + 1/(dy*dy)));
-
-	dxcon = dx / fabs(umax);
-	dycon = dy / fabs(vmax);
-
-	/* determine smalles condition */
-	min = dtcon;
-    if (min > dxcon && dxcon > 0)
-		min = dxcon;
-	if (min > dycon && dycon > 0)
-		min = dycon;
-	if (min > dttcon && dttcon > 0)
-		min = dttcon;
-	if (min > dtdcond && dtdcond > 0)
-		min = dtdcond;
-
-	/* calculate dt */
-	*dt = tau * min;
-}
 
 
 void calculate_uv(double dt, double dx, double dy, int imax, int jmax,
@@ -191,17 +149,15 @@ void calculate_uv(double dt, double dx, double dy, int imax, int jmax,
 			/*
 			 * Check that the cell is a fluid cell.
 			 */
-			//if ((Flag[i][j] & B_C) == B_C) {
+			if ((Flag[i][j] & B_C) == B_C) {
 				/*Calculate the new velocity U according to the formula above*/
-				//if (i < imax) {
-            if (Flag[i][j] >= C_F && Flag[i+1][j] >= C_F)
+				if (i < imax) {
 					U[i][j] = F[i][j] - (dt / dx) * (P[i + 1][j] - P[i][j]);
-				//}
+				}
 				/*Calculate the new velocity V according to the formula above*/
-				//if (j < jmax) {
-            	if (Flag[i][j] >= C_F && Flag[i][j+1] >= C_F){
-            		V[i][j] = G[i][j] - (dt / dy) * (P[i][j + 1] - P[i][j]);
-				//}
+				if (j < jmax) {
+					V[i][j] = G[i][j] - (dt / dy) * (P[i][j + 1] - P[i][j]);
+				}
 			}
 		}
 }
@@ -262,10 +218,6 @@ void calculate_fg1(double Re, double GX, double GY, double alpha, double dt,
 						/ 2 - abs(V[i][j - 1] + V[i + 1][j - 1]) / 2 * (U[i][j
 						- 1] - U[i][j]) / 2);
 
-				double lala1 = U[i][j] ;
-				double lala2 = dt* ((1 / Re) * (d2udx2 + d2udy2) - du2dx - duvdy + GX);
-				double lala =  dt*beta*GX*(T[i][j]+T[i+1][j])/2;
-
 
 				F[i][j] = U[i][j] + dt
 						* ((1 / Re) * (d2udx2 + d2udy2) - du2dx - duvdy + GX)
@@ -297,23 +249,15 @@ void calculate_fg1(double Re, double GX, double GY, double alpha, double dt,
 						/ 2 - abs(V[i][j - 1] + V[i][j]) / 2 * (V[i][j - 1]
 						- V[i][j]) / 2);
 
-				double lala1 = V[i][j];
-				double lala12 = T[i][j];
-				double lala123 = T[i][j+1];
-				double lala2 = dt* ((1 / Re) * (d2vdx2 + d2vdy2) - duvdx - dv2dy + GY);
-				double lala = dt*beta*GY*(T[i][j]+T[i][j+1])/2;
-
 
 				G[i][j] = V[i][j] + dt
 						* ((1 / Re) * (d2vdx2 + d2vdy2) - duvdx - dv2dy + GY)
 					       -dt*beta*GY*(T[i][j]+T[i][j+1])/2;
 
-				double lala3 = G[i][j];
-				lala3 = G[i][j];
-
 			}
 			else
 				G[i][j] = V[i][j];
+
 			/*
 			 * In case its a boundary cell, then we check it by comparing the flags and calculate
 			 * only the useful values of F and G.
@@ -384,28 +328,18 @@ void calculate_Temp(double **U, double **V, double **TEMP, int **Flag,
 	//q = 0;
 	for (j = 1; j <= jmax; j++)
 		for (i = 1; i <= imax; i++) {
-			/* See formula 9.20
-			 T[i][j] = T[i][j] + dt / (Re * Pr) * ((T[i+1][j] - 2*T[i][j] + T[i-1][j])/(dx*dx) +
-			 (T[i][j+1] - 2*T[i][j] + T[i][j-1])/(dy*dy)) + q
-			 -1/dx*(U[i][j]*(T[i][j]+T[i+1][j])/2 - U[i-1][j]*(T[i-1][j] + T[i][j])/2)
-			 + gamma/dx*(fabs(U[i][j])*(T[i][j] - T[i+1][j])/2 - fabs(U[i-1][j])*(T[i-1][j] - T[i][j])/2)
-			 - 1/dy*(V[i][j]*(T[i][j]+T[i][j+1])/2 - V[i][j-1]*(T[i][j-1] + T[i][j])/2)
-			 + gamma/dy*(fabs(V[i][j])*(T[i][j] - T[i][j+1])/2 - fabs(V[i][j-1])*(T[i][j-1] - T[i][j])/2);
-			 */
-
 			if (Flag[i][j] >= C_F) {
-
-
-				double lala1 = TEMP[i + 1][j];
-				double lala2 = TEMP[i - 1][j];
-				double lala3 = TEMP[i][j+1];
-				double lala4 = TEMP[i][j-1];
-				double lala5 = TEMP[i][j];
-
-
-				double huhu = (TEMP[i + 1][j] - 2.0 * TEMP[i][j] + TEMP[i - 1][j]);
-				double huhu1 = (TEMP[i][j + 1] - 2.0 * TEMP[i][j] + TEMP[i][j - 1]);
-
+			/* See formula 9.20
+			 TEMP[i][j] = TEMP[i][j] + dt *(
+					 1 / (Re * Pr) * (
+							 (TEMP[i+1][j] - 2*TEMP[i][j] + TEMP[i-1][j])/(dx*dx) +
+							 (TEMP[i][j+1] - 2*TEMP[i][j] + TEMP[i][j-1])/(dy*dy)
+					 ) + H[i][j]
+					 -1/dx*(U[i][j]*(TEMP[i][j]+TEMP[i+1][j])/2 - U[i-1][j]*(TEMP[i-1][j] + TEMP[i][j])/2)
+					 	 - gamma/dx*(fabs(U[i][j])*(TEMP[i][j] - TEMP[i+1][j])/2 - fabs(U[i-1][j])*(TEMP[i-1][j] - TEMP[i][j])/2)
+					 - 1/dy*(V[i][j]*(TEMP[i][j]+TEMP[i][j+1])/2 - V[i][j-1]*(TEMP[i][j-1] + TEMP[i][j])/2)
+					 	 - gamma/dy*(fabs(V[i][j])*(TEMP[i][j] - TEMP[i][j+1])/2 - fabs(V[i][j-1])*(TEMP[i][j-1] - TEMP[i][j])/2)
+			 );*/
 
 				LAPLT = (TEMP[i + 1][j] - 2.0 * TEMP[i][j] + TEMP[i - 1][j])
 						* indelx2 + (TEMP[i][j + 1] - 2.0 * TEMP[i][j]
@@ -421,7 +355,15 @@ void calculate_Temp(double **U, double **V, double **TEMP, int **Flag,
 						+ gamma * (fabs(V[i][j]) * 0.5 * (TEMP[i][j]
 								- TEMP[i][j + 1]) - fabs(V[i][j - 1]) * 0.5
 								* (TEMP[i][j - 1] - TEMP[i][j]))) / dy;
-
+				if(0 && i== 17 && j==11)
+				{
+					printf("Ui: %f, Ui-1: %f, Vj: %f, Vj-1: %f, T Summe * 0.5: %f\n", U[i][j], U[i-1][j], V[i][j], V[i][j-1], 0.5*(TEMP[i][j] + TEMP[i][j + 1]));
+					printf("1.: %f, 2: %f, gamma...: %f, dy: %f\n", U[i][j] * 0.5 * (TEMP[i][j] + TEMP[i+1][j]),
+							- U[i-1][j] * 0.5 * (TEMP[i-1][j] + TEMP[i][j]),
+							gamma * (fabs(U[i][j]) * 0.5 * (TEMP[i][j]- TEMP[i+1][j]) - fabs(U[i-1][j]) * 0.5 * (TEMP[i-1][j] - TEMP[i][j])),
+							dy);
+					printf("LAPLT/...: %f, DUTDX: %f, DVTDY: %f, TEMP: %f, H: %f, dt: %f, all: %f\n", LAPLT/(Re*Pr), DUTDX, DVTDY, TEMP[i][j], H[i][j], dt, dt * (LAPLT / (Re * Pr) - DUTDX - DVTDY));
+				}
 				double lala12 = TEMP[i][j] + dt
 									* (LAPLT / (Re * Pr) - DUTDX - DVTDY + H[i][j]);
 							TEMP[i][j] = lala12;
@@ -514,7 +456,7 @@ void chemical_reaction_irreversible(double ***C, double ***Q, double **H, int im
 		for(i=0; i<=imax; i++)
 		{
 			/* loop through each cell to see if there are substances to react
-			 * C[0] and C[1] store reactant, C[2] and C[3] product concentrations */
+			 * C[0] and C[1] store reactants, C[2] and C[3] products concentrations */
 			if(C[0][i][j] != 0 && C[1][i][j] != 0)
 			{
 				/* Volume is constant, compute the portion that reacted */
@@ -537,4 +479,64 @@ void chemical_reaction_irreversible(double ***C, double ***Q, double **H, int im
 				H[i][j] = 0;
 			}
 		}
+}
+
+
+void chemical_reaction_reversible(double ***C, double ***Q, double **H, int imax, int jmax, int s_max,
+		int a, int b, int c, int d, double k1, double k2, double dH, double dt)
+{
+	int i,j,k;
+	double dConcentration;
+	double h;/* Euler step size */
+	int euler_it = 5;/* Euler iterations */
+
+	h = dt/euler_it;
+	/* Solve dA/dt = dB/dt = -k1 * (c_A)^a * (c_B)^b
+	 * and   dC/dt = dD/dt =  k1 * (c_A)^a * (c_B)^b */
+	for(j=1; j<=jmax; j++)
+		for(i=1; i<=imax; i++)
+			if(C[0][i][j] != 0 && C[1][i][j] != 0)
+			{
+				Q[0][i][j] = C[0][i][j];
+				Q[1][i][j] = C[1][i][j];
+				Q[2][i][j] = C[2][i][j];
+				Q[3][i][j] = C[3][i][j];
+
+				/* Euler iterations */
+				for(k=0; k<euler_it; k++)
+				{
+					/* left-to-right reaction aA + bB -> cC + dD
+					 * (irreversible reactions use only this one) */
+					dConcentration = h * k1 * pow(Q[0][i][j], a) * pow(Q[1][i][j], b);
+					Q[0][i][j] -= dConcentration;
+					Q[1][i][j] -= dConcentration;
+					Q[2][i][j] += dConcentration;
+					Q[3][i][j] += dConcentration;
+
+
+
+					/* right-to-left reaction aA + bB <- cC + dD
+					 * (only for reversible reactions, irreversible reactions have k2 = 0 */
+					dConcentration = h * k2 * pow(Q[2][i][j], c) * pow(Q[3][i][j], d);
+					Q[0][i][j] += dConcentration;
+					Q[1][i][j] += dConcentration;
+					Q[2][i][j] -= dConcentration;
+					Q[3][i][j] -= dConcentration;
+				}
+
+				Q[0][i][j] -= C[0][i][j];
+				Q[1][i][j] -= C[1][i][j];
+				Q[2][i][j] -= C[2][i][j];
+				Q[3][i][j] -= C[3][i][j];
+
+				/* Energy */
+				H[i][j] = dH *10* (-Q[0][i][j]);
+				printf("H[i][j]  %f \n",H[i][j]);
+			}
+			else /* no reaction */
+			{
+				for(k=0; k<s_max; k++)
+					Q[k][i][j] = 0;
+				H[i][j] = 0;
+			}
 }

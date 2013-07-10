@@ -157,4 +157,21 @@ void calculate_Concentrations(double **U, double **V, double ***C, double ***Q,
 void chemical_reaction_irreversible(double ***C, double ***Q, double **H, int imax, int jmax, int s_max,
 		int a, int b, int c, int d, double dH);
 
+
+/* Computes the changement of temperature and concentration for each cell caused by
+ * an reversible chemical reaction
+ * @param ***C	Array of concentrations, 0 and 1 store reactant concentrations, 2 and 3 product concentrations
+ * @param ***Q	Change of concentrations
+ * @param **H	By reaction consumed/generated heat
+ * @param imax	Number of cells in x-direction
+ * @param jmax	Number of cells in y-direction
+ * @param s_max	Number of substances (always 4)
+ * @param a,b,c,d	Coefficients of the reaction aA + bB -> cC + dD
+ * @param k1	Speed coefficient for the left-to-right reaction
+ * @param k2	Speed coefficient for the right-to-left reaction
+ * @param dH	Enthalpy of reaction, heat that gets free/consumed by one reaction
+ * @param dt	Time step size */
+void chemical_reaction_reversible(double ***C, double ***Q, double **H, int imax, int jmax, int s_max,
+		int a, int b, int c, int d, double k1, double k2, double dH, double dt);
+
 #endif

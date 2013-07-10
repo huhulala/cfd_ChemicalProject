@@ -35,13 +35,14 @@ int read_parameters(
                     int *c,
                     int *d,
                     double *dH,
+                    double *k1,
+                    double *k2,
                     double *lambda,
                     int *static_substances,
                     double    *cl,
                     double    *cr,
                     double    *ct,
                     double    *cb
-
 )
 {
    READ_DOUBLE( szFileName, *xlength );
@@ -86,7 +87,8 @@ int read_parameters(
    READ_INT( szFileName, *c );
    READ_INT( szFileName, *d );
    READ_DOUBLE( szFileName, *dH );
-
+   READ_DOUBLE( szFileName, *k1 );
+   READ_DOUBLE( szFileName, *k2 );
    return 1;
 }
 

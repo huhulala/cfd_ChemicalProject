@@ -50,6 +50,7 @@ void boundaryvalues(int imax, int jmax, double dx, double dy, int wl, int wr,
 			break;
 		}
 
+		T[i][0] = T[i][1];
 		T[i][jmax+1] = T[i][jmax];
 	}
 	for (j = 1; j <= jmax; j++) {
@@ -85,6 +86,7 @@ void boundaryvalues(int imax, int jmax, double dx, double dy, int wl, int wr,
 			break;
 		}
 
+		T[0][j] = T[1][j];
 		T[imax+1][j] = T[imax][j];
 	}
 
@@ -384,7 +386,7 @@ void spec_boundary_val(char *problem, int imax, int jmax, int s_max, double dx, 
 		double ***C) {
 	int s;
 	int j = 0;
-	if (strcmp(problem, "karman") == 0 || strcmp(problem, "baffle") == 0) {
+	if (strcmp(problem, "karman") == 0 || strcmp(problem, "advection") == 0) {
 		for (j = 1; j <= jmax; ++j) {
 			/* set karman inflow */
 			U[0][j] = 1.0;

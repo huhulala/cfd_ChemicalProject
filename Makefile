@@ -13,7 +13,7 @@ OBJ = 	helper.o\
 
 
 all:  $(OBJ)
-	$(CC) $(CFLAGS) -o sim $(OBJ)  -lm
+	$(CC) $(CFLAGS) -o ./bin/sim $(OBJ)  -lm
 
 %.o : %.c
 	$(CC) -c $(CFLAGS) $*.c -o $*.o

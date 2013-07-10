@@ -1,0 +1,2 @@
+- needs problem string as argument. "plane","karman","step" are implemented
+- needs output dirs in working directory named: output_"problemstring" (e.g. output_karman)

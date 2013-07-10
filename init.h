@@ -37,6 +37,15 @@
  * @param eps        tolerance limit for pressure calculation
  * @param dt_value   time steps for output (after how many time steps one should
  *                   write into the output file)
+ * @param TI		 initial temperature of each cell
+ * @param beta		 Coefficient of the thermal expansion (used in calculate_fg)
+ * @param gamma		 in [0;1], determines a weighted average of discretizing with
+ * 					 central differences and donor-cell discretization (used in calculate_Temp)
+ * @param Pr		 Prantl number
+ * @param a, b, c, d Coefficients of the chemical reaction aA + bB -> cC + dD
+ * @param dH		 Heat produced/consumed by one reaction
+ * @param k1, k2	 Speed coefficient of the forward and backward reaction
+ * @param lambda	 Diffusion coefficient (used in calculate_Concentrations)
  */
 int read_parameters(
 					const char *szFileName,       /* name of the file */
@@ -71,6 +80,8 @@ int read_parameters(
                     int *c,
                     int *d,
                     double *dH,
+                    double *k1,
+                    double *k2,
                     double *lambda,
                     int *static_substances,
                     double    *cl,
