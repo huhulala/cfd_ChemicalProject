@@ -142,7 +142,7 @@ void boundaryvalues(int imax, int jmax, double dx, double dy, int wl, int wr,
 			}
 		}
 
-
+	  /** boundaries for temperture **/
 	for (i = 1; i <= imax; ++i) {
 		for (j = 1; j <= jmax; ++j) {
 			if (Flag[i][j] == B_N) {
@@ -210,6 +210,49 @@ void boundaryvalues(int imax, int jmax, double dx, double dy, int wl, int wr,
               C[k][i][0] = 2*ct - C[k][i][jmax];
         }
     }
+
+    /** boundaries for substances **/
+    for (k = 0; k < s_max; ++k) {
+          for (i = 1; i <= imax; ++i) {
+              for (j = 1; j <= jmax; ++j) {
+                  if (Flag[i][j] == B_N)
+                  {
+                	  C[k][i][j]=C[k][i][j+1];
+                   }
+                   else if (Flag[i][j] == B_W)
+                   {
+                      C[k][i][j]=C[k][i-1][j];
+                    }
+                    else if (Flag[i][j] == B_S)
+                    {
+                       C[k][i][j]=C[k][i][j-1];
+                    }
+                    else if (Flag[i][j] == B_O)
+                    {
+                        C[k][i][j]=C[k][i+1][j];
+                    }
+                    else if (Flag[i][j] == B_NO)
+                    {
+                        C[k][i][j]=(C[k][i+1][j]+C[k][i][j+1])/2;
+                    }
+                    else if (Flag[i][j] == B_NW)
+                    {
+                        C[k][i][j]=(C[k][i-1][j]+C[k][i][j+1])/2;
+                    }
+                    else if (Flag[i][j] == B_SO)
+                    {
+                        C[k][i][j]=(C[k][i+1][j]+C[k][i][j-1])/2;
+                    }
+                    else if (Flag[i][j] == B_SW)
+                    {
+                       C[k][i][j]=(C[k][i-1][j]+C[k][i][j-1])/2;
+                    }
+              }
+          }
+    }
+
+
+
 }
 
 /**
