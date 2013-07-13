@@ -13,18 +13,6 @@ void boundaryvalues(int imax, int jmax, double dx, double dy, int wl, int wr,
 		  double cb,
 		  double ct);
 
-void boundaryvalues1(
-		int imax,
-		int jmax,
-		double **U,
-		double **V,
-		const int wl,
-		const int wr,
-		const int wt,
-		const int wb,
-		int **Flag
-);
-
 /*Set special boundary*/
 
 void spec_boundary_val(

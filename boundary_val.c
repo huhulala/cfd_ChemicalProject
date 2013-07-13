@@ -17,6 +17,9 @@ void boundaryvalues(int imax, int jmax, double dx, double dy, int wl, int wr,
 	int j = 0;
 	int k = 0;
 
+	/******************************************************************/
+	/*U & V & T boundary values
+	/******************************************************************/
 	for (i = 1; i <= imax; i++) {
 		/* lower bounder */
 		switch (wb) {
@@ -142,7 +145,7 @@ void boundaryvalues(int imax, int jmax, double dx, double dy, int wl, int wr,
 			}
 		}
 
-	  /** boundaries for temperture **/
+	  /** boundaries for temperature **/
 	for (i = 1; i <= imax; ++i) {
 		for (j = 1; j <= jmax; ++j) {
 			if (Flag[i][j] == B_N) {
@@ -179,8 +182,9 @@ void boundaryvalues(int imax, int jmax, double dx, double dy, int wl, int wr,
 		}
 	}
 
-	 /** concentration goes here;
-	  * either boundary cons or inflow **/
+	/******************************************************************/
+	/* Concentration boundary values
+	/******************************************************************/
     for (k = 0; k < s_max; ++k)
     {
         /** left and right wall **/
@@ -250,185 +254,15 @@ void boundaryvalues(int imax, int jmax, double dx, double dy, int wl, int wr,
               }
           }
     }
-
-
-
 }
 
-/**
- * The boundary values of the problem are set.
- */
-void boundaryvalues1(int imax, int jmax, double **U, double **V, const int wl,
-		const int wr, const int wt, const int wb, int **Flag) {
-
-	int i, j;
-	/*Initialize corners*/
-	U[0][0] = 0.0;
-	U[0][jmax + 1] = 0.0;
-	U[imax + 1][0] = 0.0;
-	U[imax + 1][jmax + 1] = 0.0;
-	V[0][0] = 0.0;
-	V[0][jmax + 1] = 0.0;
-	V[imax + 1][0] = 0.0;
-	V[imax + 1][jmax + 1] = 0.0;
-
-	/* Set values for all the outside boundary depending on the value that
-	 * the data file is set to. NO_SLIP = 1, FREE_SLIP=2 and OUTFLOW=3
-	 * We start with the left boundary. */
-	switch (wl) {
-	case NO_SLIP:
-		for (j = 1; j < jmax + 1; j++) {
-			/*U velocity on left boundary */
-			U[0][j] = 0;
-			/*V velocity left boundary */
-			V[0][j] = -1 * V[1][j];
-		}
-		break;
-	case FREE_SLIP:
-		for (j = 1; j < jmax + 1; j++) {
-			/*U velocity on left boundary */
-			U[0][j] = 0;
-			/*V velocity left boundary */
-			V[0][j] = V[1][j];
-		}
-		break;
-	case OUTFLOW:
-		for (j = 1; j < jmax + 1; j++) {
-			/*U velocity on left boundary */
-			U[0][j] = U[1][j];
-			/*V velocity left boundary */
-			V[0][j] = V[1][j];
-		}
-		break;
-	default:
-		break;
-	}
-
-	/*Set values for the right boundary*/
-	switch (wr) {
-	case NO_SLIP:
-		for (j = 1; j < jmax + 1; j++) {
-			U[imax][j] = 0;
-			V[imax + 1][j] = -1 * V[imax][j];
-		}
-		break;
-	case FREE_SLIP:
-		for (j = 1; j < jmax + 1; j++) {
-			U[imax][j] = 0;
-			V[imax + 1][j] = V[imax][j];
-		}
-		break;
-	case OUTFLOW:
-		for (j = 1; j < jmax + 1; j++) {
-			U[imax][j] = U[imax - 1][j];
-			V[imax + 1][j] = V[imax][j];
-		}
-		break;
-	default:
-		break;
-	}
-
-	/*Set values for the top boundary*/
-	switch (wt) {
-	case NO_SLIP:
-		for (i = 1; i < imax + 1; i++) {
-			V[i][jmax] = 0;
-			U[i][jmax + 1] = -1 * U[i][jmax];
-		}
-		break;
-	case FREE_SLIP:
-		for (i = 1; i < imax + 1; i++) {
-			V[i][jmax] = 0;
-			U[i][jmax + 1] = U[i][jmax];
-		}
-		break;
-	case OUTFLOW:
-		for (i = 1; i < imax + 1; i++) {
-			V[i][jmax] = V[i][jmax - 1];
-			U[i][jmax + 1] = U[i][jmax];
-		}
-		break;
-	default:
-		break;
-	}
-
-	/*Set values for the bottom boundary*/
-	switch (wb) {
-	case NO_SLIP:
-		for (i = 1; i < imax + 1; i++) {
-			V[i][0] = 0;
-			U[i][0] = -1 * U[i][1];
-		}
-		break;
-	case FREE_SLIP:
-		for (i = 1; i < imax + 1; i++) {
-			V[i][0] = 0;
-			U[i][0] = U[i][1];
-		}
-		break;
-	case OUTFLOW:
-		for (i = 1; i < imax + 1; i++) {
-			V[i][0] = V[i][1];
-			U[i][0] = U[i][1];
-		}
-		break;
-	default:
-		break;
-	}
-
-	/**
-	 * Loop to check for boundary cells in the inner domain, and assign
-	 * correct values of U and V.
-	 */
-	for (i = 1; i < imax + 1; i++) {
-		for (j = 1; j < jmax + 1; j++) {
-			if ((Flag[i][j] & 31) == B_N) {
-				V[i][j] = 0;
-				U[i - 1][j] = -1 * U[i - 1][j + 1];
-				U[i][j] = -1 * U[i][j + 1];
-			} else if ((Flag[i][j] & 31) == B_S) {
-				V[i][j - 1] = 0;
-				U[i - 1][j] = -1 * U[i - 1][j - 1];
-				U[i][j] = -1 * U[i][j - 1];
-			} else if ((Flag[i][j] & 31) == B_W) {
-				U[i - 1][j] = 0;
-				V[i][j - 1] = -1 * V[i - 1][j - 1];
-				V[i][j] = -1 * V[i - 1][j];
-			} else if ((Flag[i][j] & 31) == B_O) {
-				U[i][j] = 0;
-				V[i][j - 1] = -1 * V[i + 1][j - 1];
-				V[i][j] = -1 * V[i + 1][j];
-			} else if ((Flag[i][j] & 31) == B_NO) {
-				U[i][j] = 0;
-				U[i - 1][j] = -1 * U[i - 1][j + 1];
-				V[i][j] = 0;
-				V[i][j - 1] = -1 * V[i + 1][j - 1];
-			} else if ((Flag[i][j] & 31) == B_NW) {
-				U[i - 1][j] = 0;
-				U[i][j] = -1 * U[i][j + 1];
-				V[i][j] = 0;
-				V[i][j - 1] = -1 * V[i - 1][j - 1];
-			} else if ((Flag[i][j] & 31) == B_SO) {
-				U[i][j] = 0;
-				U[i - 1][j] = -1 * U[i - 1][j - 1];
-				V[i][j - 1] = 0;
-				V[i][j] = -1 * V[i + 1][j];
-			} else if ((Flag[i][j] & 31) == B_SW) {
-				U[i - 1][j] = 0;
-				U[i][j] = -1 * U[i][j - 1];
-				V[i][j] = -1 * V[i - 1][j];
-				V[i][j - 1] = 0;
-			}
-		}
-	}
-
-}
 
 void spec_boundary_val(char *problem, int imax, int jmax, int s_max, double dx, double dy,
 		double Re, double deltaP, double **U, double **V, double **P, double **T,
 		double ***C) {
 	int s;
 	int j = 0;
+
 	if (strcmp(problem, "karman") == 0 || strcmp(problem, "advection") == 0) {
 		for (j = 1; j <= jmax; ++j) {
 			/* set karman inflow */

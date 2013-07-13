@@ -124,7 +124,6 @@ int main(int argn, char** args)
 		return 1;
 	}
 	if (!(strcmp(args[1], "karman") == 0
-		|| strcmp(args[1], "baffle") == 0
 		|| strcmp(args[1], "plane") == 0
 		|| strcmp(args[1], "step") == 0
 		|| strcmp(args[1], "cavity") == 0
@@ -132,10 +131,10 @@ int main(int argn, char** args)
 		|| strcmp(args[1], "rayleigh_plane")== 0
 		|| strcmp(args[1], "diffusion") == 0
 		|| strcmp(args[1], "fluidTrap") == 0
-		|| strcmp(args[1], "karman_diffusion") == 0
+		|| strcmp(args[1], "advection") == 0
 		|| strcmp(args[1], "reaction_irreversible") == 0))
 	{
-		printf("ERROR: pass cavity, baffle, rayleigh, rayleigh_plane, fluidTrap, karman, karman_diffusion, plane or step\n");
+		printf("ERROR: pass cavity, rayleigh, rayleigh_plane, fluidTrap, karman, reaction_irreversible, plane or step\n");
 		return 1;
 	}
 
@@ -149,7 +148,6 @@ int main(int argn, char** args)
 	inputDir= "./input/";
 
 	strcpy(inputDirCharArray, inputDir);
-
 	strcpy(output_filename_array, output_filename);
 	strcat(output_filename_array, args[1]);
 	strcat(output_filename_array, "/");
@@ -256,28 +254,17 @@ int main(int argn, char** args)
 	    spec_boundary_val( problem, imax, jmax, s_max, dx, dy, Re, deltaP, U, V, P, T, C);
 
 	    /* chemical reactions in each cell */
-	    // chemical_reaction_irreversible(C, Q, H, imax,jmax, s_max, a, b, c, d, dH);
 	    chemical_reaction_reversible(C, Q, H, imax,jmax, s_max, a, b, c, d, k1, k2, dH, dt);
 
 	    /* calculate new temperature values */
 	    calculate_Temp(U, V, T, Flag, imax, jmax, dt, dx, dy, alpha, Re, Pr,H);
 
+	    /* calculate new concentration values */
 	    calculate_Concentrations(U, V, C, Q, Flag, imax, jmax, s_max, dt, dx, dy,
-	   		lambda, alpha); /* TODO: gamma2 ? */
+	   		lambda, alpha);
 
-
-		//printf("calculate_Temp T\n");
-		//print_matrixD(T,0, imax + 1, 0, jmax + 1);
-
-		/*calculate F&G* - here the signature was extended to the FLAG
-	     * matrix to calculate values only for fluid cells */
-
-	    // some error in fg helper
-	    //calculate_fg( Re, GX, GY, alpha, dt, dx,dy, imax, jmax, U, V, F, G, Flag);
-		calculate_fg1(Re, GX, GY, alpha, dt, dx, dy, imax, jmax, U, V ,F , G, Flag ,T,beta);
-
-		//printf("G\n");
-		//print_matrixD(G,0, imax + 1, 0, jmax + 1);
+	    /* calculate new F&G values */
+	    calculate_fg(Re, GX, GY, alpha, dt, dx, dy, imax, jmax, U, V ,F , G, Flag ,T,beta);
 
 		/*calculate righthand site - here the signature was extended to the FLAG
 	     * matrix to calculate values only for fluid cells */
@@ -297,7 +284,6 @@ int main(int argn, char** args)
 	     * matrix to calculate values only for fluid cells */
 	    calculate_uv(dt,dx,dy,imax,jmax, U, V, F, G, P, Flag);
 
-
 		n++;
 		if (t > t_print)
 	 	{
@@ -309,11 +295,6 @@ int main(int argn, char** args)
 				printf("write outputfile - step-counter: %i, time: %f, sor-interations: %i  \n",n, t, it);
 			}
 	 	}
-/*		printf("T:\n");
-		print_matrixD(T ,1, imax, 1, jmax);
-		printf("U:\n");
-		print_matrixD(U ,1, imax, 1, jmax);*/
-
 	 	t = t + dt;
 	}
 	//write_vtkFile(output_filename_array, n, imax, jmax, dx, dy, U, V, P);

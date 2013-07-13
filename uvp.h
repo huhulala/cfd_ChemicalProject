@@ -28,25 +28,6 @@ void calculate_fg(
   double GX,
   double GY,
   double alpha,
-  double beta,
-  double dt,
-  double dx,
-  double dy,
-  int imax,
-  int jmax,
-  double **U,
-  double **V,
-  double **F,
-  double **G,
-  double **P,
-  int **Flag
-);
-
-void calculate_fg1(
-  double Re,
-  double GX,
-  double GY,
-  double alpha,
   double dt,
   double dx,
   double dy,

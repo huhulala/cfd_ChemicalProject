@@ -6,78 +6,6 @@
 #include <limits.h>
 #include "NSDefinitions.h"
 
-void calculate_fg(double Re, double GX, double GY, double alpha, double beta,
-		double dt, double dx, double dy, int imax, int jmax, double **U,
-		double **V, double **F, double **G, double **T, int **Flag) {
-	/* see formulas 9 and 10 in combination with formulas 4 and 5 */
-	int i;
-	int j;
-
-	for (j = 1; j <= jmax; j++)
-		for (i = 1; i <= imax; i++) {
-			/********** calculate F **********/
-			/* calculate f and g only between two fluid cells */
-			if (((Flag[i][j] & B_C) == B_C) && i < imax) {
-				F[i][j] = U[i][j] + dt * (
-				/* 1/Re * (d²u/dx² + d²u/dy²) */
-				1 / Re * (d2udx2(i, j, U, dx) + d2udy2(i, j, U, dy))
-				/* - du²/dx */
-				- du2dx(i, j, U, dx, alpha)
-				/* - duv/dy */
-				- duvdy(i, j, U, V, dy, alpha) + GX)
-				/* temperature */
-				- beta * dt / 2 * (T[i][j] + T[i + 1][j]);
-			}
-
-			/********** calculate G **********/
-			if (((Flag[i][j] & B_C) == B_C) && i < imax) {
-				G[i][j] = V[i][j] + dt * (
-				/* 1/Re * (d²v/dx² + d²v/dy²) */
-				1 / Re * (d2vdx2(i, j, V, dx) + d2vdy2(i, j, V, dy))
-				/* - duv/dx */
-				- duvdx(i, j, U, V, dx, alpha)
-				/* - dv²/dy */
-				- dv2dy(i, j, V, dy, alpha) + GY)
-				/* temperature */
-				- beta * dt / 2 * (T[i][j] + T[i][j + 1]);
-			}
-
-			if ((Flag[i][j] & 31) == B_N) {
-				G[i][j] = V[i][j];
-			} else if ((Flag[i][j] & 31) == B_S) {
-				G[i][j - 1] = V[i][j - 1];
-			} else if ((Flag[i][j] & 31) == B_W) {
-				F[i - 1][j] = U[i - 1][j];
-			} else if ((Flag[i][j] & 31) == B_O) {
-				F[i][j] = U[i][j];
-			} else if ((Flag[i][j] & 31) == B_NO) {
-				F[i][j] = U[i][j];
-				G[i][j] = V[i][j];
-			} else if ((Flag[i][j] & 31) == B_NW) {
-				F[i - 1][j] = U[i - 1][j];
-				G[i][j] = V[i][j];
-			} else if ((Flag[i][j] & 31) == B_SO) {
-				F[i][j] = U[i][j];
-				G[i][j - 1] = V[i][j - 1];
-			} else if ((Flag[i][j] & 31) == B_SW) {
-				F[i - 1][j] = U[i - 1][j];
-				G[i][j - 1] = V[i][j - 1];
-			}
-
-		}
-
-	/* calculate boundary values -  see formula 17 */
-	for (j = 1; j <= jmax; j++) {
-		F[0][j] = U[0][j];
-		F[imax][j] = U[imax][j];
-	}
-	for (i = 1; i <= imax; i++) {
-		G[i][0] = V[i][0];
-		G[i][jmax] = V[i][jmax];
-	}
-}
-
-
 void calculate_dt(double Re, double Pr, double tau, double *dt, double dx,
 		double dy, int imax, int jmax, int s_max, double **U, double **V, double ***C, double lambda) {
 	// See formula 13
@@ -175,7 +103,7 @@ void calculate_rs(double dt, double dx, double dy, int imax, int jmax,
 		}
 }
 
-void calculate_fg1(double Re, double GX, double GY, double alpha, double dt,
+void calculate_fg(double Re, double GX, double GY, double alpha, double dt,
 		double dx, double dy, int imax, int jmax, double **U, double **V,
 		double **F, double **G, int **Flag, double **T, double beta)
 
@@ -301,24 +229,18 @@ void calculate_fg1(double Re, double GX, double GY, double alpha, double dt,
 	}
 }
 
-void calculate_Temp(double **U, double **V, double **TEMP, int **Flag,
+void calculate_Temp(double **U, double **V, double **T, int **Flag,
 		int imax, int jmax, double dt, double dx, double dy, double gamma, double Re, double Pr, double**H) {
 
-	double dutdx;
-	double d2tdx2;
-	double dvtdy;
-	double d2tdy2;
-	double firstOperand;
-	double secondOperand;
 	double indelx2;
 	double indely2;
 
-	double LAPLT, DUTDX, DVTDY;
+	double laplt, dutdx, dvtdy;
 	int i, j;
 
-	LAPLT = 0.0;
-	DUTDX = 0.0;
-	DVTDY = 0.0;
+	laplt = 0.0;
+	dutdx = 0.0;
+	dvtdy = 0.0;
 
 	indelx2 = 1 / (dx * dx);
 	indely2 = 1 / (dy * dy);
@@ -329,79 +251,26 @@ void calculate_Temp(double **U, double **V, double **TEMP, int **Flag,
 	for (j = 1; j <= jmax; j++)
 		for (i = 1; i <= imax; i++) {
 			if (Flag[i][j] >= C_F) {
-			/* See formula 9.20
-			 TEMP[i][j] = TEMP[i][j] + dt *(
-					 1 / (Re * Pr) * (
-							 (TEMP[i+1][j] - 2*TEMP[i][j] + TEMP[i-1][j])/(dx*dx) +
-							 (TEMP[i][j+1] - 2*TEMP[i][j] + TEMP[i][j-1])/(dy*dy)
-					 ) + H[i][j]
-					 -1/dx*(U[i][j]*(TEMP[i][j]+TEMP[i+1][j])/2 - U[i-1][j]*(TEMP[i-1][j] + TEMP[i][j])/2)
-					 	 - gamma/dx*(fabs(U[i][j])*(TEMP[i][j] - TEMP[i+1][j])/2 - fabs(U[i-1][j])*(TEMP[i-1][j] - TEMP[i][j])/2)
-					 - 1/dy*(V[i][j]*(TEMP[i][j]+TEMP[i][j+1])/2 - V[i][j-1]*(TEMP[i][j-1] + TEMP[i][j])/2)
-					 	 - gamma/dy*(fabs(V[i][j])*(TEMP[i][j] - TEMP[i][j+1])/2 - fabs(V[i][j-1])*(TEMP[i][j-1] - TEMP[i][j])/2)
-			 );*/
-
-				LAPLT = (TEMP[i + 1][j] - 2.0 * TEMP[i][j] + TEMP[i - 1][j])
-						* indelx2 + (TEMP[i][j + 1] - 2.0 * TEMP[i][j]
-						+ TEMP[i][j - 1]) * indely2;
-
-				DUTDX = ((U[i][j] * 0.5 * (TEMP[i][j] + TEMP[i + 1][j]) - U[i
-						- 1][j] * 0.5 * (TEMP[i - 1][j] + TEMP[i][j])) + gamma
-						* (fabs(U[i][j]) * 0.5 * (TEMP[i][j] - TEMP[i + 1][j])
-								- fabs(U[i - 1][j]) * 0.5 * (TEMP[i - 1][j]
-										- TEMP[i][j]))) / dx;
-				DVTDY = ((V[i][j] * 0.5 * (TEMP[i][j] + TEMP[i][j + 1])
-						- V[i][j - 1] * 0.5 * (TEMP[i][j - 1] + TEMP[i][j]))
-						+ gamma * (fabs(V[i][j]) * 0.5 * (TEMP[i][j]
-								- TEMP[i][j + 1]) - fabs(V[i][j - 1]) * 0.5
-								* (TEMP[i][j - 1] - TEMP[i][j]))) / dy;
-				if(0 && i== 17 && j==11)
-				{
-					printf("Ui: %f, Ui-1: %f, Vj: %f, Vj-1: %f, T Summe * 0.5: %f\n", U[i][j], U[i-1][j], V[i][j], V[i][j-1], 0.5*(TEMP[i][j] + TEMP[i][j + 1]));
-					printf("1.: %f, 2: %f, gamma...: %f, dy: %f\n", U[i][j] * 0.5 * (TEMP[i][j] + TEMP[i+1][j]),
-							- U[i-1][j] * 0.5 * (TEMP[i-1][j] + TEMP[i][j]),
-							gamma * (fabs(U[i][j]) * 0.5 * (TEMP[i][j]- TEMP[i+1][j]) - fabs(U[i-1][j]) * 0.5 * (TEMP[i-1][j] - TEMP[i][j])),
-							dy);
-					printf("LAPLT/...: %f, DUTDX: %f, DVTDY: %f, TEMP: %f, H: %f, dt: %f, all: %f\n", LAPLT/(Re*Pr), DUTDX, DVTDY, TEMP[i][j], H[i][j], dt, dt * (LAPLT / (Re * Pr) - DUTDX - DVTDY));
-				}
-				double lala12 = TEMP[i][j] + dt
-									* (LAPLT / (Re * Pr) - DUTDX - DVTDY + H[i][j]);
-							TEMP[i][j] = lala12;
-				TEMP[i][j] = lala12;
 
 
+				laplt = (T[i + 1][j] - 2.0 * T[i][j] + T[i - 1][j])
+						* indelx2 + (T[i][j + 1] - 2.0 * T[i][j]
+						+ T[i][j - 1]) * indely2;
 
-				/*
-				 firstOperand = (1 / dx) * (U[i][j] * (T[i][j] + T[i + 1][j])
-				 / 2 - U[i - 1][j] * (T[i - 1][j] + T[i][j]) / 2);
-				 secondOperand = (alpha / dx) * (fabs(U[i][j]) * (T[i][j] - T[i
-				 + 1][j]) / 2 - fabs(U[i - 1][j]) * (T[i - 1][j]
-				 - T[i][j]) / 2);
+				dutdx = ((U[i][j] * 0.5 * (T[i][j] + T[i + 1][j]) - U[i
+						- 1][j] * 0.5 * (T[i - 1][j] + T[i][j])) + gamma
+						* (fabs(U[i][j]) * 0.5 * (T[i][j] - T[i + 1][j])
+								- fabs(U[i - 1][j]) * 0.5 * (T[i - 1][j]
+										- T[i][j]))) / dx;
+				dvtdy = ((V[i][j] * 0.5 * (T[i][j] + T[i][j + 1])
+						- V[i][j - 1] * 0.5 * (T[i][j - 1] + T[i][j]))
+						+ gamma * (fabs(V[i][j]) * 0.5 * (T[i][j]
+								- T[i][j + 1]) - fabs(V[i][j - 1]) * 0.5
+								* (T[i][j - 1] - T[i][j]))) / dy;
 
-				 dutdx = firstOperand + secondOperand;
+				T[i][j] = T[i][j] + dt
+						* (laplt / (Re * Pr) - dutdx - dvtdy + H[i][j]);
 
-
-				 firstOperand = (1 / dy) * (V[i][j] * (T[i][j] + T[i][j + 1])
-				 / 2 - V[i][j - 1] * (T[i][j - 1] + T[i][j]) / 2);
-				 secondOperand = (alpha / dy) * (fabs(V[i][j]) * (T[i][j]
-				 - T[i][j + 1]) / 2 - fabs(V[i][j - 1]) * (T[i][j - 1]
-				 - T[i][j]) / 2);
-
-				 dvtdy = firstOperand + secondOperand;
-
-
-
-				 d2tdx2 = (T[i + 1][j] - 2 * T[i][j] + T[i - 1][j]) / (dx * dx);
-
-
-
-				 d2tdy2 = (T[i][j + 1] - 2 * T[i][j] + T[i][j - 1]) / (dy * dy);
-
-
-
-				 T[i][j] = T[i][j] + dt * ((1 / (Re * Pr)) * (d2tdx2 + d2tdy2)
-				 - dutdx - dvtdy);
-				 */
 			}
 
 		}
@@ -531,7 +400,7 @@ void chemical_reaction_reversible(double ***C, double ***Q, double **H, int imax
 
 				/* Energy */
 				H[i][j] = dH *10* (-Q[0][i][j]);
-				printf("H[i][j]  %f \n",H[i][j]);
+				//printf("H[i][j]  %f \n",H[i][j]);
 			}
 			else /* no reaction */
 			{
