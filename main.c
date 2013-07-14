@@ -223,6 +223,7 @@ int main(int argn, char** args)
 	 * string to init u&v in the step case to 0 */
 	init_uvp(TI, UI, VI, PI, imax, jmax, problem, Flag, U, V, P, T, C, Q, s_max);
 
+	/* print domains */
 	printf("\n");
 	printf("Geometric Domain:\n");
 	print_matrix(Flag,0, imax + 1, 0, jmax + 1);
@@ -236,15 +237,12 @@ int main(int argn, char** args)
 	/* init static concentrations here */
     init_staticConcentrations(C, ChemicalSources,sourceTypeArray, s_max, imax, jmax);
 
-	printf("init sourceTypeArray\n");
-	print_matrixD(sourceTypeArray ,0, numberOfSources-1, 0, 1);
-
 	t_print = 0;
 	while (t < t_end)
 	{
 		if (t > t_con)
 	 	{
-			/* adjust concentrations*/
+			/* adjust (non-static) concentrations every second */
 			adjust_Concentration(C,ChemicalSources,sourceTypeArray, s_max, imax, jmax);
 	 		t_con += 1.0;
 	 	}
@@ -268,7 +266,7 @@ int main(int argn, char** args)
 	 	}
 
 	    /* chemical reactions in each cell */
-	    //chemical_reaction_reversible(C, Q, H, imax,jmax, s_max, a, b, c, d, k1, k2, dH, dt);
+	    chemical_reaction_reversible(C, Q, H, imax,jmax, s_max, a, b, c, d, k1, k2, dH, dt);
 
 	    /* calculate new temperature values */
 	    calculate_Temp(U, V, T, Flag, imax, jmax, dt, dx, dy, alpha, Re, Pr,H);
@@ -311,7 +309,8 @@ int main(int argn, char** args)
 	 	}
 	 	t = t + dt;
 	}
-	//write_vtkFile(output_filename_array, n, imax, jmax, dx, dy, U, V, P);
+	/* write end values into output*/
+	write_vtkFile(output_filename_array, n, imax, jmax, dx, dy, U, V, P, T,C, s_max);
 
 	/* free arrays */
 	free_matrix(U, 0, imax + 1, 0, jmax + 1);

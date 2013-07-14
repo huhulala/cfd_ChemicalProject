@@ -341,8 +341,8 @@ void spec_boundary_val(char *problem, int imax, int jmax, int s_max, double dx, 
 
 	     for(j=0;j<=imax+1;j++)
 	     {
-	    	 T[j][0] = 0.5;
-	    	 T[j][jmax+1] = -0.5;
+	    	 T[j][0] = 1.8;
+	    	 T[j][jmax+1] = -1.8;
 	     }
 	     return;
 	  }

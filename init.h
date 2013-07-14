@@ -92,6 +92,8 @@ int read_parameters(
 
 /** Reads the chemical sources from the sources-File */
 void read_numberOfSources(const char *fileName, int *numberOfSources);
+
+/** Reads the sources-File */
 int read_sources(const char *fileName, double **sources);
 
 /**
@@ -116,6 +118,9 @@ void init_uvp(
   int s_max
 );
 
+/**
+ * Initializes static concentrations
+**/
 void init_staticConcentrations(
 		double*** C,
 		int **Sources,
@@ -125,6 +130,9 @@ void init_staticConcentrations(
 		int jmax
 );
 
+/**
+ * Adjusts dynamic concentrations
+**/
 void adjust_Concentration(double*** C,int **Sources,double **sourceTypeArray, int s_max, int imax,int jmax);
 
 /**
