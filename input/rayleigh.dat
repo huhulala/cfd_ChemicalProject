@@ -14,13 +14,13 @@ jmax		500
 #               time steps
 #--------------------------------------------
 dt		0.0125
-t_end	2000.0
+t_end	250.0
 tau	 	0.5
 
 #--------------------------------------------
 #               output
 #--------------------------------------------
-dt_value        0.5
+dt_value        5.0
 
 #--------------------------------------------
 #               pressure
@@ -53,6 +53,10 @@ wl		1
 wr		1
 wb		1
 wt		1
+cl          0
+cr          0
+cb          0
+ct          0
 
 #--------------------------------------------
 #         initialization pressure
@@ -67,28 +71,26 @@ UI		0
 VI		0
 
 #--------------------------------------------
-#       initialization substances/diffusion parameters
+#       initialization substances
 #--------------------------------------------
 static_substances 0
-lambda     0.0
-cl          0.0
-cr          0.0
-cb          0.0
-ct          0.0
+lambda     0.01
 
 #--------------------------------------------
-#  chemical reaction aA + bB -> cC + dD parameters
+#  chemical reaction aA + bB -> cC + dD
 #--------------------------------------------
 a	1
 b	1
 c	1
 d	1
-dH	0.02
+dH	0.00
+k1	0.00
+k2	0
 
 #--------------------------------------------
-#               temperature
+#       temperature values 
 #--------------------------------------------
 TI		0
-beta	 0.0034 
-gamma	 2
+beta	 0.063
+gamma	 1
 
