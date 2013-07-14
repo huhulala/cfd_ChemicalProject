@@ -60,7 +60,7 @@ void sor(double omg, double dx, double dy, int imax, int jmax, double **P,
 		/* Dirichet boundary conditons -
 		 *  this is not very sophisticated; the sor
 		 *  should be problem independet*/
-		if (strcmp(problem, "plane") == 0)
+		if (strcmp(problem, "pollution") == 0)
 		{
 			P[0][j] = 2 * deltaP - P[1][j];
 			P[imax+1][j] = -P[imax][j];
