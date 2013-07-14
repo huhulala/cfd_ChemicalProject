@@ -16,26 +16,19 @@ void calculate_dt(double Re, double Pr, double tau, double *dt, double dx,
 	int i, j, s;
 
 	for (j = 1; j <= jmax; j++)
-		for (i = 1; i <= imax; i++) {
-			if (fabs(U[i][j]) > umax)
-				umax = fabs(U[i][j]);
-			if (fabs(V[i][j]) > vmax)
-				vmax = fabs(V[i][j]);
-		}
+	for (i = 1; i <= imax; i++)
+	{
+		if (fabs(U[i][j]) > umax)
+			umax = fabs(U[i][j]);
+		if (fabs(V[i][j]) > vmax)
+			vmax = fabs(V[i][j]);
+	}
 	// Compute maximal concentration difference
-	dccon = fabs(C[0][1][1] - C[0][1][2]);
-	for(s = 0; s < s_max; s++)
-		for(j = 1; j<= jmax; j++)
-			for(i = 1; i <= imax; i++)
-			{
-				if(fabs(C[s][i][j] - C[s][i][j+1]) > dccon)
-					dccon = fabs(C[s][i][j] - C[s][i][j+1]);
-				if(fabs(C[s][i][j] - C[s][i+1][j]) > dccon)
-					dccon = fabs(C[s][i][j] - C[s][i+1][j]);
-			}
-	dccon = dx*(1-dccon);
+
+
 
 	// conditions
+	dccon = lambda/(2*(1/(dx*dx) + 1/(dy*dy)));
 	dtcon = Pr * Re / (2 * (1 / (dx * dx) + 1 / (dy * dy)));
     dttcon = Re/(2*(1/(dx*dx) + 1/(dy*dy)));
 
@@ -53,13 +46,13 @@ void calculate_dt(double Re, double Pr, double tau, double *dt, double dx,
 
 	// determine smalles condition
 	min = dtcon;
-	if (min > dxcon)
+	if (min > dxcon && dxcon!= 0)
 		min = dxcon;
-	if (min > dycon)
+	if (min > dycon  && dycon!= 0)
 		min = dycon;
-	if (min > dttcon)
+	if (min > dttcon  && dxcon!= 0)
 		min = dttcon;
-	if (min > dccon)
+	if (min > dccon  && dccon!= 0)
 		min = dccon;
 
 	// calculate dt

@@ -49,6 +49,7 @@ int main(int argn, char** args)
 	double eps, dt_value, res, t, deltaP;
 	int itermax, it, n, initialStep;
 	double t_print;
+	double t_con = 1.0;
 
 	/**************** dimensionless quantities for temperature  ****************/
 	double beta; /* cooefficient for termal expansion beta */
@@ -98,10 +99,16 @@ int main(int argn, char** args)
 	int **Flag = NULL;
     int **ChemicalSources = NULL;
 
+    /* arrays for chemical sources */
+    /* [source (starting from 0)][0:start concentration=0, continuous source=1; 1:concentration(/time)]*/
+    double **sourceTypeArray = NULL;
+    int numberOfSources;
+
     /* arrays for chemical quantities*/
 	char inputString[64];
 	char problemImageName[64];
 	char szFileName[64];
+	char sourcesFileName[64];
 
 	/* Static value for substances ? */
 	int static_substances;
@@ -124,13 +131,9 @@ int main(int argn, char** args)
 		return 1;
 	}
 	if (!(strcmp(args[1], "karman") == 0
-		|| strcmp(args[1], "plane") == 0
-		|| strcmp(args[1], "step") == 0
-		|| strcmp(args[1], "cavity") == 0
 		|| strcmp(args[1], "rayleigh") == 0
 		|| strcmp(args[1], "rayleigh_plane")== 0
 		|| strcmp(args[1], "diffusion") == 0
-		|| strcmp(args[1], "fluidTrap") == 0
 		|| strcmp(args[1], "advection") == 0
 		|| strcmp(args[1], "reaction_irreversible") == 0))
 	{
@@ -149,6 +152,7 @@ int main(int argn, char** args)
 
 	strcpy(inputDirCharArray, inputDir);
 	strcpy(output_filename_array, output_filename);
+	strcpy(sourcesFileName, inputDir);
 	strcat(output_filename_array, args[1]);
 	strcat(output_filename_array, "/");
 	strcat(output_filename_array, args[1]);
@@ -156,6 +160,8 @@ int main(int argn, char** args)
 	strcpy(szFileName, inputString);
 	strcat(szFileName, ".dat");
 	strcat(inputDirCharArray, szFileName);
+	strcat(sourcesFileName, inputString);
+	strcat(sourcesFileName, ".sources");
 
 	/* load parameters from "problem".dat file */
 	/* grid size (dx,dy,imax,ymax) should now be read from the image */
@@ -172,6 +178,12 @@ int main(int argn, char** args)
 	/*  load problem description from "problem".pgm file */
 	/*  read imax and jmax (and calculate dx und dy) from problem description now */
 	Problem = read_pgm(inputDirCharArray, &imax, &jmax);
+
+	/* read chemical source values */
+	//read_numberOfSources(sourcesFileName, &numberOfSources);
+   // sourceTypeArray = matrix(0, numberOfSources-1, 0, 1);
+    //read_sources(sourcesFileName, sourceTypeArray);
+
 	/* calculute dx/dy */
 	dx = xlength / (double) (imax);
 	dy = ylength / (double) (jmax);
@@ -220,41 +232,42 @@ int main(int argn, char** args)
 	print_matrix(ChemicalSources,0, imax + 1, 0, jmax + 1);
 	printf("\n");
 
-	if(static_substances)
-	{
-		init_staticConcentrations(C, ChemicalSources, s_max, imax, jmax);
-	}
+	/* init static concentrations here */
+    init_staticConcentrations(C, ChemicalSources,sourceTypeArray, s_max, imax, jmax);
 
-//	printf("init C0\n");
-//	print_matrixD(C[0] ,0, imax + 1, 0, jmax + 1);
+	//printf("init C0\n");
+	//print_matrixD(C[1] ,0, imax + 1, 0, jmax + 1);
 
 	t_print = 0;
 	while (t < t_end)
 	{
+		if (t > t_con)
+	 	{
+			/* adjust concentrations*/
+			//adjust_Concentration(C,ChemicalSources,sourceTypeArray, s_max, imax, jmax);
+	 		t_con += 1.0;
+	 	}
+		/*calculate the timestep */
+        calculate_dt(Re, Pr, tau, &dt, dx, dy, imax,jmax, s_max, U,V, C, lambda);
+
+        /*calculate the boundary values   */
+		boundaryvalues( imax, jmax,dx,dy, wl, wr, wt, wb, U, V, F, G, P, T, Flag,
+				C,s_max, cl,cr, cb, ct);
+
+    	/* set special boundary values*/
+	    spec_boundary_val( problem, imax, jmax, s_max, dx, dy, Re, deltaP, U, V, P, T, C);
+
 		if (!initialStep)
 	 	{
+			/* write initial values into output*/
 	 		write_vtkFile(output_filename_array, n, imax, jmax, dx, dy, U, V, P, T,
 	 				C, s_max);
 	 		printf("write outputfile - step-counter: %i, time: 0, sor-interations: 0  \n",n);
 			initialStep = 1;
 	 	}
 
-
-		/*calculate the timestep */
-        calculate_dt(Re, Pr, tau, &dt, dx, dy, imax,jmax, s_max, U,V, C, lambda);
-
-        /*calculate the boundary values   */
-		boundaryvalues( imax, jmax,dx,dy, wl, wr, wt, wb, U, V, F, G, P, T, Flag,
-				C,s_max, cl,
-				   cr,
-				   cb,
-				   ct);
-
-    	/* set special boundary values*/
-	    spec_boundary_val( problem, imax, jmax, s_max, dx, dy, Re, deltaP, U, V, P, T, C);
-
 	    /* chemical reactions in each cell */
-	    chemical_reaction_reversible(C, Q, H, imax,jmax, s_max, a, b, c, d, k1, k2, dH, dt);
+	    //chemical_reaction_reversible(C, Q, H, imax,jmax, s_max, a, b, c, d, k1, k2, dH, dt);
 
 	    /* calculate new temperature values */
 	    calculate_Temp(U, V, T, Flag, imax, jmax, dt, dx, dy, alpha, Re, Pr,H);

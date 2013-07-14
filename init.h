@@ -90,6 +90,10 @@ int read_parameters(
                     double    *cb
 );
 
+/** Reads the chemical sources from the sources-File */
+void read_numberOfSources(const char *fileName, int *numberOfSources);
+int read_sources(const char *fileName, double **sources);
+
 /**
  * The arrays U,V and P are initialized to the constant values UI, VI and PI on
  * the whole domain.
@@ -115,10 +119,13 @@ void init_uvp(
 void init_staticConcentrations(
 		double*** C,
 		int **Sources,
+		double **sourceTypeArray,
 		int s_max,
 		int imax,
 		int jmax
 );
+
+void adjust_Concentration(double*** C,int **Sources,double **sourceTypeArray, int s_max, int imax,int jmax);
 
 /**
  * Initializes the FLAG field

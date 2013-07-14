@@ -92,7 +92,65 @@ int read_parameters(
    return 1;
 }
 
+void read_numberOfSources(const char *fileName, int *numberOfSources)
+{
+	FILE *fp;
+    char line[1024];
 
+    if ((fp=fopen(fileName,"r"))==0)
+    {
+       char szBuff[80];
+	   sprintf( szBuff, "Can not read file %s !!!", fileName );
+	   ERROR( szBuff );
+    }
+    printf("Read sources from %s:\n", fileName);
+    fgets(line, 1024, fp);
+    sscanf(line, "%d", numberOfSources);
+    printf("Number of sources: %d\n", *numberOfSources);
+    fclose(fp);
+}
+
+int read_sources(const char *fileName, double **sources)
+{
+	int i, numberOfSources;
+	double foo, bar;
+	/* try to read file and find number of sources */
+	FILE *fp;
+    char line[1024];
+
+    if ((fp=fopen(fileName,"r"))==0)
+    {
+       char szBuff[80];
+	   sprintf( szBuff, "Can not read file %s !!!", fileName );
+	   ERROR( szBuff );
+    }
+    printf("Read sources from %s:\n", fileName);
+    fgets(line, 1024, fp);
+    /* dummy line, we need the ones from the second */
+    sscanf(line, "%d", &numberOfSources);
+	for(i=1; i<=numberOfSources; i++)
+	{
+		printf("i: %d\n", i);
+		if(!feof(fp))
+		{
+			fgets(line, 1024, fp);
+			sscanf(line, "%lf %lf\n", &foo, &bar);
+			sources[i-1][0] = foo;
+			sources[i-1][1] = bar;
+			printf("Source %d: ", i);
+			if(!sources[i-1][0])
+				printf("start concentration: %f\n", sources[i-1][1]);
+			else
+				printf("source output %f/sec\n", sources[i-1][1]);
+		}
+		else
+		{
+			ERROR("Number of Sources is not equal to the number of lines in the .sources-file!");
+		}
+	}
+	fclose(fp);
+	return 0;
+}
 
 /**
  * The arrays U,V and P are initialized to the constant values UI, VI and PI on
@@ -139,7 +197,8 @@ void init_uvp(double TI, double UI, double VI, double PI, int imax, int jmax,
     }
 }
 
-void init_staticConcentrations(double*** C,int **Sources, int s_max, int imax,int jmax)
+void init_staticConcentrations(double*** C,int **Sources,
+		double **sourceTypeArray, int s_max, int imax,int jmax)
 {
     int i = 0;
     int j = 0;
@@ -151,7 +210,26 @@ void init_staticConcentrations(double*** C,int **Sources, int s_max, int imax,in
     {
     	if( Sources[i][j] == k+1)
     	{
-    		 C[k][i][j] = 0.4;
+    		if(sourceTypeArray[k][0] == 1.0)
+    		    C[k][i][j] = sourceTypeArray[k][1];
+        }
+    }
+}
+
+void adjust_Concentration(double*** C,int **Sources,double **sourceTypeArray, int s_max, int imax,int jmax){
+
+    int i = 0;
+    int j = 0;
+    int k = 0;
+
+    for (k = 0; k < s_max; ++k)
+    for (i = 1; i <= imax; ++i)
+    for (j = 1; j <= jmax; ++j)
+    {
+    	if( Sources[i][j] == k+1)
+    	{
+    		if(sourceTypeArray[k][0] == 0.0)
+    		    C[k][i][j] += sourceTypeArray[k][1];
         }
     }
 }
