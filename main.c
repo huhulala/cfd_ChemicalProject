@@ -132,12 +132,13 @@ int main(int argn, char** args)
 	}
 	if (!(strcmp(args[1], "karman") == 0
 		|| strcmp(args[1], "rayleigh") == 0
+		|| strcmp(args[1], "pollution") == 0
 		|| strcmp(args[1], "rayleigh_plane")== 0
 		|| strcmp(args[1], "diffusion") == 0
 		|| strcmp(args[1], "advection") == 0
 		|| strcmp(args[1], "reaction_irreversible") == 0))
 	{
-		printf("ERROR: pass cavity, rayleigh, rayleigh_plane, fluidTrap, karman, reaction_irreversible, plane or step\n");
+		printf("ERROR: pass cavity, pollution, rayleigh, rayleigh_plane, fluidTrap, karman, reaction_irreversible, plane or step\n");
 		return 1;
 	}
 
@@ -180,9 +181,9 @@ int main(int argn, char** args)
 	Problem = read_pgm(inputDirCharArray, &imax, &jmax);
 
 	/* read chemical source values */
-	//read_numberOfSources(sourcesFileName, &numberOfSources);
-   // sourceTypeArray = matrix(0, numberOfSources-1, 0, 1);
-    //read_sources(sourcesFileName, sourceTypeArray);
+	read_numberOfSources(sourcesFileName, &numberOfSources);
+    sourceTypeArray = matrix(0, numberOfSources-1, 0, 1);
+    read_sources(sourcesFileName, sourceTypeArray);
 
 	/* calculute dx/dy */
 	dx = xlength / (double) (imax);
@@ -235,8 +236,8 @@ int main(int argn, char** args)
 	/* init static concentrations here */
     init_staticConcentrations(C, ChemicalSources,sourceTypeArray, s_max, imax, jmax);
 
-	//printf("init C0\n");
-	//print_matrixD(C[1] ,0, imax + 1, 0, jmax + 1);
+	printf("init sourceTypeArray\n");
+	print_matrixD(sourceTypeArray ,0, numberOfSources-1, 0, 1);
 
 	t_print = 0;
 	while (t < t_end)
@@ -244,7 +245,7 @@ int main(int argn, char** args)
 		if (t > t_con)
 	 	{
 			/* adjust concentrations*/
-			//adjust_Concentration(C,ChemicalSources,sourceTypeArray, s_max, imax, jmax);
+			adjust_Concentration(C,ChemicalSources,sourceTypeArray, s_max, imax, jmax);
 	 		t_con += 1.0;
 	 	}
 		/*calculate the timestep */

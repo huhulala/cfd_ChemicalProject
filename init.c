@@ -228,6 +228,7 @@ void adjust_Concentration(double*** C,int **Sources,double **sourceTypeArray, in
     {
     	if( Sources[i][j] == k+1)
     	{
+    		double lala = sourceTypeArray[k][0];
     		if(sourceTypeArray[k][0] == 0.0)
     		    C[k][i][j] += sourceTypeArray[k][1];
         }

@@ -199,6 +199,8 @@ void boundaryvalues(int imax, int jmax, double dx, double dy, int wl, int wr,
          	  C[k][imax+1][j] = C[k][imax][j];
          	else if(cr > 0.0)
          	  C[k][imax+1][j] = 2*cr-C[k][imax][j];
+           	else if(cb < 0.0)
+                  C[k][i][0] = 0.0;
         }
         /** top and bottom wall **/
         for(i = 0; i <= imax; ++i)
@@ -263,10 +265,17 @@ void spec_boundary_val(char *problem, int imax, int jmax, int s_max, double dx, 
 	int s;
 	int j = 0;
 
-	if (strcmp(problem, "karman") == 0 || strcmp(problem, "advection") == 0) {
+	if (strcmp(problem, "karman") == 0 || strcmp(problem, "advection")  == 0) {
 		for (j = 1; j <= jmax; ++j) {
 			/* set karman inflow */
 			U[0][j] = 1.0;
+			V[0][j] = 0.0;
+		}
+	}
+	else if (strcmp(problem, "pollution") == 0) {
+		for (j = 1; j <= jmax; ++j) {
+			/* set karman inflow */
+			U[0][j] = 0.25;
 			V[0][j] = 0.0;
 		}
 	}
